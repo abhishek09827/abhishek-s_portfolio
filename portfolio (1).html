@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>abhishek@ai-engineer — terminal</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --terminal-bg: rgba(13,13,13,0.92);
+    --glass: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --green: #00ff9d;
+    --cyan: #00d4ff;
+    --purple: #b06aff;
+    --yellow: #ffd700;
+    --red: #ff5f57;
+    --amber: #ffbd2e;
+    --lime: #28c840;
+    --dim: rgba(255,255,255,0.35);
+    --muted: rgba(255,255,255,0.18);
+    --text: #e8e8e8;
+    --font: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  html, body {
+    height:100%; overflow:hidden;
+    background: var(--bg);
+    font-family: var(--font);
+    color: var(--text);
+  }
+
+  /* ── Canvas background ── */
+  #canvas-bg {
+    position:fixed; inset:0; z-index:0;
+    pointer-events:none;
+  }
+
+  /* ── Layout ── */
+  #app {
+    position:relative; z-index:1;
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    gap:16px;
+  }
+
+  /* ── Main terminal window ── */
+  #terminal-window {
+    width:min(820px, 100%);
+    height:min(640px, calc(100vh - 40px));
+    background: var(--terminal-bg);
+    border: 1px solid var(--border);
+    border-radius:12px;
+    backdrop-filter:blur(24px);
+    -webkit-backdrop-filter:blur(24px);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.05),
+      0 32px 80px rgba(0,0,0,0.8),
+      0 0 60px rgba(0,255,157,0.04);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    flex-shrink:0;
+  }
+
+  /* ── Title bar ── */
+  #titlebar {
+    height:40px;
+    background: rgba(255,255,255,0.03);
+    border-bottom:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    padding:0 14px;
+    gap:8px;
+    flex-shrink:0;
+    user-select:none;
+  }
+  .dot {
+    width:13px; height:13px;
+    border-radius:50%;
+    cursor:pointer;
+    transition:filter .2s;
+    position:relative;
+  }
+  .dot:hover { filter:brightness(1.3); }
+  .dot.red   { background:#ff5f57; box-shadow:0 0 6px rgba(255,95,87,.4); }
+  .dot.amber { background:#ffbd2e; box-shadow:0 0 6px rgba(255,189,46,.4); }
+  .dot.lime  { background:#28c840; box-shadow:0 0 6px rgba(40,200,64,.4); }
+  #title-text {
+    flex:1; text-align:center;
+    font-size:12px; color:var(--dim);
+    letter-spacing:.05em;
+  }
+  #cmd-tabs {
+    display:flex; gap:6px;
+  }
+  .tab {
+    font-size:10px;
+    color:var(--muted);
+    background:var(--glass);
+    border:1px solid var(--border);
+    border-radius:4px;
+    padding:2px 8px;
+    cursor:pointer;
+    transition:all .2s;
+  }
+  .tab:hover, .tab.active {
+    color:var(--green);
+    border-color:var(--green);
+    box-shadow:0 0 8px rgba(0,255,157,.15);
+  }
+
+  /* ── Terminal body ── */
+  #terminal-body {
+    flex:1;
+    overflow-y:auto;
+    padding:16px 20px;
+    scroll-behavior:smooth;
+    font-size:13px;
+    line-height:1.7;
+  }
+  #terminal-body::-webkit-scrollbar { width:4px; }
+  #terminal-body::-webkit-scrollbar-thumb {
+    background:var(--muted);
+    border-radius:2px;
+  }
+
+  /* ── Output lines ── */
+  .line { display:block; white-space:pre-wrap; word-break:break-word; }
+  .line.prompt-line { color:var(--green); }
+  .line.green  { color:var(--green); }
+  .line.cyan   { color:var(--cyan); }
+  .line.purple { color:var(--purple); }
+  .line.yellow { color:var(--yellow); }
+  .line.red    { color:#ff6b6b; }
+  .line.dim    { color:var(--dim); }
+  .line.muted  { color:var(--muted); }
+  .line.bold   { font-weight:700; }
+
+  /* ── Prompt input ── */
+  #input-bar {
+    border-top:1px solid var(--border);
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:rgba(255,255,255,0.015);
+    flex-shrink:0;
+  }
+  #prompt-label {
+    color:var(--green);
+    font-size:13px;
+    white-space:nowrap;
+    flex-shrink:0;
+  }
+  #cmd-input {
+    flex:1;
+    background:transparent;
+    border:none;
+    outline:none;
+    color:var(--text);
+    font-family:var(--font);
+    font-size:13px;
+    caret-color:var(--green);
+  }
+  #autocomplete-hint {
+    color:var(--muted);
+    font-size:13px;
+    pointer-events:none;
+    flex-shrink:0;
+  }
+
+  /* ── Side AI panel ── */
+  #ai-panel {
+    width:320px;
+    height:min(640px, calc(100vh - 40px));
+    background: var(--terminal-bg);
+    border:1px solid var(--border);
+    border-radius:12px;
+    backdrop-filter:blur(24px);
+    -webkit-backdrop-filter:blur(24px);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.05),
+      0 32px 80px rgba(0,0,0,0.8),
+      0 0 40px rgba(176,106,255,0.06);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    flex-shrink:0;
+  }
+  #ai-header {
+    height:40px;
+    background:rgba(176,106,255,0.06);
+    border-bottom:1px solid rgba(176,106,255,.15);
+    display:flex;
+    align-items:center;
+    padding:0 14px;
+    gap:8px;
+  }
+  #ai-header span { color:var(--purple); font-size:12px; letter-spacing:.05em; }
+  .ai-indicator {
+    width:8px; height:8px;
+    border-radius:50%;
+    background:var(--purple);
+    box-shadow:0 0 8px var(--purple);
+    animation:pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50%      { opacity:.6; transform:scale(.85); }
+  }
+  #ai-messages {
+    flex:1;
+    overflow-y:auto;
+    padding:12px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    font-size:12px;
+    line-height:1.65;
+  }
+  #ai-messages::-webkit-scrollbar { width:3px; }
+  #ai-messages::-webkit-scrollbar-thumb { background:var(--muted); border-radius:2px; }
+  .ai-msg {
+    padding:8px 10px;
+    border-radius:6px;
+    animation:fadeIn .3s ease;
+  }
+  .ai-msg.user {
+    background:rgba(0,212,255,.08);
+    border:1px solid rgba(0,212,255,.12);
+    color:var(--cyan);
+    align-self:flex-end;
+    max-width:90%;
+  }
+  .ai-msg.assistant {
+    background:rgba(176,106,255,.06);
+    border:1px solid rgba(176,106,255,.12);
+    color:var(--text);
+    align-self:flex-start;
+    max-width:95%;
+  }
+  .ai-msg .label {
+    font-size:10px;
+    color:var(--muted);
+    margin-bottom:3px;
+    letter-spacing:.05em;
+  }
+  .ai-msg.user .label { color:rgba(0,212,255,.5); }
+  .ai-msg.assistant .label { color:rgba(176,106,255,.5); }
+  @keyframes fadeIn {
+    from { opacity:0; transform:translateY(6px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  #ai-input-bar {
+    border-top:1px solid var(--border);
+    padding:10px 12px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:rgba(176,106,255,.03);
+  }
+  #ai-input {
+    flex:1;
+    background:transparent;
+    border:none;
+    outline:none;
+    color:var(--text);
+    font-family:var(--font);
+    font-size:12px;
+    caret-color:var(--purple);
+  }
+  #ai-send {
+    background:rgba(176,106,255,.15);
+    border:1px solid rgba(176,106,255,.3);
+    color:var(--purple);
+    border-radius:4px;
+    padding:4px 10px;
+    font-family:var(--font);
+    font-size:11px;
+    cursor:pointer;
+    transition:all .2s;
+    white-space:nowrap;
+  }
+  #ai-send:hover {
+    background:rgba(176,106,255,.25);
+    box-shadow:0 0 10px rgba(176,106,255,.2);
+  }
+
+  /* ── Misc ── */
+  .blink {
+    display:inline-block;
+    animation:blink 1s step-end infinite;
+  }
+  @keyframes blink { 50%{opacity:0} }
+
+  .progress-bar {
+    display:inline-block;
+    height:6px;
+    border-radius:3px;
+    background:var(--green);
+    box-shadow:0 0 8px rgba(0,255,157,.4);
+    transition:width .8s ease;
+  }
+  .progress-bg {
+    display:inline-block;
+    width:120px;
+    height:6px;
+    border-radius:3px;
+    background:rgba(255,255,255,.08);
+    vertical-align:middle;
+    overflow:hidden;
+  }
+
+  .tag {
+    display:inline-block;
+    border-radius:3px;
+    padding:1px 6px;
+    font-size:11px;
+    font-weight:600;
+  }
+  .tag.green  { background:rgba(0,255,157,.12); color:var(--green); border:1px solid rgba(0,255,157,.25); }
+  .tag.cyan   { background:rgba(0,212,255,.12); color:var(--cyan);  border:1px solid rgba(0,212,255,.25); }
+  .tag.purple { background:rgba(176,106,255,.12); color:var(--purple); border:1px solid rgba(176,106,255,.25); }
+  .tag.yellow { background:rgba(255,215,0,.1);  color:var(--yellow); border:1px solid rgba(255,215,0,.2); }
+
+  /* Suggestions dropdown */
+  #suggestions {
+    position:absolute;
+    bottom:60px;
+    left:20px;
+    background:rgba(20,20,20,.97);
+    border:1px solid var(--border);
+    border-radius:6px;
+    overflow:hidden;
+    display:none;
+    z-index:100;
+    min-width:200px;
+    box-shadow:0 8px 32px rgba(0,0,0,.6);
+  }
+  .suggestion-item {
+    padding:6px 12px;
+    font-size:12px;
+    cursor:pointer;
+    color:var(--dim);
+    transition:all .15s;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .suggestion-item:hover, .suggestion-item.selected {
+    background:rgba(0,255,157,.08);
+    color:var(--green);
+  }
+  .suggestion-item span.hint {
+    color:var(--muted);
+    font-size:10px;
+  }
+
+  /* Mobile hint */
+  #mobile-hint {
+    display:none;
+    position:fixed;
+    bottom:10px;
+    left:50%;
+    transform:translateX(-50%);
+    background:rgba(0,0,0,.8);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:6px 14px;
+    font-size:11px;
+    color:var(--muted);
+    z-index:200;
+  }
+
+  @media(max-width:900px) {
+    #ai-panel { display:none; }
+    #terminal-window { width:100%; }
+    #mobile-hint { display:block; }
+  }
+  @media(max-width:480px) {
+    #app { padding:8px; }
+    #terminal-body { font-size:11px; }
+    #cmd-input { font-size:11px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="canvas-bg"></canvas>
+
+<div id="app">
+  <!-- ── Main Terminal ── -->
+  <div id="terminal-window">
+    <div id="titlebar">
+      <div class="dot red"   title="Close"></div>
+      <div class="dot amber" title="Minimize"></div>
+      <div class="dot lime"  title="Maximize"></div>
+      <div id="title-text">abhishek@ai-engineer — zsh — 120×40</div>
+      <div id="cmd-tabs">
+        <div class="tab active">~</div>
+        <div class="tab" onclick="quickCmd('projects')">proj</div>
+        <div class="tab" onclick="quickCmd('skills')">skills</div>
+      </div>
+    </div>
+
+    <div id="terminal-body"></div>
+
+    <div id="suggestions"></div>
+
+    <div id="input-bar">
+      <span id="prompt-label">abhishek@ai-engineer:~$</span>
+      <input id="cmd-input" type="text" autocomplete="off" autocorrect="off" spellcheck="false" autofocus placeholder="type a command...">
+      <span id="autocomplete-hint"></span>
+    </div>
+  </div>
+
+  <!-- ── AI Side Panel ── -->
+  <div id="ai-panel">
+    <div id="ai-header">
+      <div class="ai-indicator"></div>
+      <span>ask_abhishek — AI assistant</span>
+    </div>
+    <div id="ai-messages">
+      <div class="ai-msg assistant">
+        <div class="label">// abhishek.ai</div>
+        Hey! I'm an AI trained on Abhishek's resume & projects. Ask me anything — his skills, experience, or what he's building. ⚡
+      </div>
+    </div>
+    <div id="ai-input-bar">
+      <input id="ai-input" type="text" placeholder="Ask about Abhishek..." autocomplete="off" spellcheck="false">
+      <button id="ai-send">send ↵</button>
+    </div>
+  </div>
+</div>
+
+<div id="mobile-hint">💡 Tap the input and type a command</div>
+
+<script>
+/* ════════════════════════════════════════════════
+   CANVAS — Matrix rain (very subtle)
+════════════════════════════════════════════════ */
+(function() {
+  const canvas = document.getElementById('canvas-bg');
+  const ctx = canvas.getContext('2d');
+  let cols, drops;
+  const chars = '01アイウエカキクケコサシスセソタチツテトナニヌネノ';
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    cols = Math.floor(canvas.width / 20);
+    drops = Array(cols).fill(1);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function draw() {
+    ctx.fillStyle = 'rgba(13,13,13,0.08)';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = 'rgba(0,255,157,0.03)';
+    ctx.font = '14px monospace';
+    drops.forEach((y, i) => {
+      const ch = chars[Math.floor(Math.random()*chars.length)];
+      ctx.fillText(ch, i*20, y*20);
+      if (y*20 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+      drops[i]++;
+    });
+  }
+  setInterval(draw, 80);
+})();
+
+/* ════════════════════════════════════════════════
+   DATA
+════════════════════════════════════════════════ */
+const RESUME_CONTEXT = `
+Abhishek is a Backend + Data Engineer specializing in AI-powered systems at scale.
+Currently a Cloud Developer at HPE (Hewlett Packard Enterprise) since 2025.
+At HPE he builds Kafka streaming pipelines, Airflow orchestration workflows, and optimizes distributed data systems.
+Projects:
+1. QueryMind — Natural Language to SQL engine using RAG (Retrieval Augmented Generation). Users ask questions in plain English and get SQL queries + results instantly. Uses LLMs + vector embeddings.
+2. AIOps Engine — LLM-powered automation platform that detects anomalies in infrastructure logs, auto-creates JIRA tickets, and suggests remediation steps.
+Skills:
+- Data Engineering: Apache Kafka, PySpark, Apache Airflow, dbt, Flink, Hive, HDFS
+- AI/ML: LLMs (GPT-4, Claude, Mistral), RAG, LangChain, LlamaIndex, Embeddings, Vector DBs (Pinecone, Weaviate)
+- Backend: Python, FastAPI, Go, REST APIs, gRPC
+- Cloud: AWS (S3, EMR, Lambda, Glue), GCP, Docker, Kubernetes, Terraform
+- Databases: PostgreSQL, Redis, Cassandra, MongoDB, Elasticsearch
+Currently working on: AI agents for data workflow automation, Kafka pipeline optimization, open-source RAG tooling.
+Contact: github.com/abhishek | linkedin.com/in/abhishek | abhishek@email.com
+`;
+
+const COMMANDS = {
+  help: { desc: 'list available commands' },
+  whoami: { desc: 'about me' },
+  experience: { desc: 'work history' },
+  projects: { desc: 'my projects' },
+  skills: { desc: 'technical skills' },
+  currently_working_on: { desc: 'what I\'m building now' },
+  contact: { desc: 'get in touch' },
+  ask_abhishek: { desc: 'AI chat about me' },
+  clear: { desc: 'clear terminal' },
+  'sudo hire me': { desc: '👀' },
+  'run pipeline': { desc: '⚙️' },
+  'init ai_agent': { desc: '🤖' },
+};
+
+/* ════════════════════════════════════════════════
+   TERMINAL ENGINE
+════════════════════════════════════════════════ */
+const body = document.getElementById('terminal-body');
+const input = document.getElementById('cmd-input');
+const hint  = document.getElementById('autocomplete-hint');
+const sugg  = document.getElementById('suggestions');
+
+let history = [], histIdx = -1;
+let printing = false;
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function appendLine(text='', cls='', delay=0) {
+  return new Promise(async r => {
+    if (delay) await sleep(delay);
+    const el = document.createElement('span');
+    el.className = 'line ' + cls;
+    el.textContent = text;
+    body.appendChild(el);
+    body.appendChild(document.createElement('br'));
+    body.scrollTop = body.scrollHeight;
+    r();
+  });
+}
+
+async function typewriterLine(text, cls='', speed=18) {
+  const el = document.createElement('span');
+  el.className = 'line ' + cls;
+  body.appendChild(el);
+  body.appendChild(document.createElement('br'));
+  for (const ch of text) {
+    el.textContent += ch;
+    body.scrollTop = body.scrollHeight;
+    await sleep(speed);
+  }
+}
+
+function appendRaw(html, delay=0) {
+  return new Promise(async r => {
+    if (delay) await sleep(delay);
+    const el = document.createElement('div');
+    el.innerHTML = html;
+    body.appendChild(el);
+    body.scrollTop = body.scrollHeight;
+    r();
+  });
+}
+
+function appendPrompt(cmd) {
+  const el = document.createElement('span');
+  el.className = 'line prompt-line';
+  el.textContent = `abhishek@ai-engineer:~$ ${cmd}`;
+  body.appendChild(el);
+  body.appendChild(document.createElement('br'));
+}
+
+/* ════════════════════════════════════════════════
+   BOOT SEQUENCE
+════════════════════════════════════════════════ */
+async function boot() {
+  printing = true;
+  const ascii = [
+    '  █████╗ ██████╗ ██╗  ██╗██╗███████╗██╗  ██╗███████╗██╗  ██╗',
+    ' ██╔══██╗██╔══██╗██║  ██║██║██╔════╝██║  ██║██╔════╝██║ ██╔╝',
+    ' ███████║██████╔╝███████║██║███████╗███████║█████╗  █████╔╝ ',
+    ' ██╔══██║██╔══██╗██╔══██║██║╚════██║██╔══██║██╔══╝  ██╔═██╗ ',
+    ' ██║  ██║██████╔╝██║  ██║██║███████║██║  ██║███████╗██║  ██╗',
+    ' ╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚═╝╚══════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝',
+  ];
+  for (const line of ascii) {
+    await appendLine(line, 'green', 40);
+  }
+  await appendLine('', '', 60);
+  await appendLine('  Backend + Data Engineer · AI Systems · Distributed Scale', 'cyan', 80);
+  await appendLine('  v2.0.0 · zsh 5.9 · ⬡ node 20 · 🐍 python 3.11', 'muted', 60);
+  await appendLine('', '', 40);
+  await appendLine('  Type `help` to see available commands.', 'dim', 40);
+  await appendLine('  Try: whoami · experience · projects · skills · contact', 'muted', 30);
+  await appendLine('', '', 60);
+  printing = false;
+  input.focus();
+}
+
+/* ════════════════════════════════════════════════
+   COMMAND HANDLERS
+════════════════════════════════════════════════ */
+async function runCommand(raw) {
+  const cmd = raw.trim().toLowerCase();
+  appendPrompt(raw.trim());
+  await appendLine('', '', 60);
+
+  if (!cmd) { printing = false; return; }
+
+  history.unshift(raw.trim());
+  histIdx = -1;
+
+  switch(cmd) {
+    case 'help':           await cmdHelp();           break;
+    case 'whoami':         await cmdWhoami();         break;
+    case 'experience':     await cmdExperience();     break;
+    case 'projects':       await cmdProjects();       break;
+    case 'skills':         await cmdSkills();         break;
+    case 'currently_working_on': await cmdCurrently(); break;
+    case 'contact':        await cmdContact();        break;
+    case 'ask_abhishek':   await cmdAskAbhishek();    break;
+    case 'clear':          body.innerHTML=''; break;
+    case 'sudo hire me':   await cmdHireMe();         break;
+    case 'run pipeline':   await cmdPipeline();       break;
+    case 'init ai_agent':  await cmdAIAgent();        break;
+    default:               await cmdNotFound(cmd);    break;
+  }
+
+  await appendLine('', '', 40);
+}
+
+async function cmdHelp() {
+  await appendLine('AVAILABLE COMMANDS', 'cyan bold');
+  await appendLine('─'.repeat(48), 'muted');
+  for (const [name, meta] of Object.entries(COMMANDS)) {
+    if (name.startsWith('sudo') || name.startsWith('run') || name.startsWith('init')) continue;
+    await appendLine(`  ${name.padEnd(24)} ${meta.desc}`, 'dim', 40);
+  }
+  await appendLine('', '', 40);
+  await appendLine('EASTER EGGS (try them):', 'yellow');
+  await appendLine('  sudo hire me  ·  run pipeline  ·  init ai_agent', 'muted', 40);
+}
+
+async function cmdWhoami() {
+  await appendLine('// IDENTITY LOADED', 'purple', 80);
+  await appendLine('', '', 40);
+  await typewriterLine('  Abhishek', 'green bold', 40);
+  await appendLine('  Backend + Data Engineer building AI-powered systems at scale', 'text', 40);
+  await appendLine('', '', 40);
+  await appendLine('  ┌─ CURRENT ROLE ───────────────────────────────────────', 'muted', 60);
+  await appendLine('  │  Cloud Developer @ Hewlett Packard Enterprise (HPE)', 'cyan', 40);
+  await appendLine('  │  Focus: Kafka · PySpark · Airflow · LLMs · RAG', 'dim', 40);
+  await appendLine('  │  Building data pipelines + AI workflows at enterprise scale', 'dim', 40);
+  await appendLine('  └─────────────────────────────────────────────────────', 'muted', 40);
+  await appendLine('', '', 40);
+  await appendLine('  INTERESTS:', 'yellow');
+  await appendLine('  ▸ Distributed data systems        ▸ LLM-powered automation', 'dim', 30);
+  await appendLine('  ▸ Real-time streaming pipelines   ▸ AI agent architectures', 'dim', 30);
+  await appendLine('  ▸ Open-source tooling             ▸ Performance optimization', 'dim', 30);
+}
+
+async function cmdExperience() {
+  await appendLine('// INITIALIZING EXPERIENCE LOGS...', 'purple', 80);
+  await appendLine('', '', 60);
+  const logs = [
+    ['[2025-present]', 'Cloud Developer @ Hewlett Packard Enterprise (HPE)', 'cyan'],
+    [null, '  ✦ Built real-time Kafka streaming pipelines (50M+ events/day)', 'dim'],
+    [null, '  ✦ Designed Airflow-orchestrated ETL workflows across AWS', 'dim'],
+    [null, '  ✦ Optimized PySpark jobs — 40% latency reduction', 'dim'],
+    [null, '  ✦ Integrated LLM-based anomaly detection into AIOps', 'dim'],
+    [null, '  ✦ Contributed to distributed data mesh architecture', 'dim'],
+    [null, '', ''],
+    ['[2024]', 'Data Engineering Intern @ Startup (AI/ML)', 'cyan'],
+    [null, '  ✦ Built NL-to-SQL prototype (now: QueryMind)', 'dim'],
+    [null, '  ✦ Implemented vector-based document retrieval (RAG)', 'dim'],
+    [null, '  ✦ Deployed FastAPI microservices on Kubernetes', 'dim'],
+    [null, '', ''],
+    ['[2023]', 'Open Source Contributor — Apache Airflow', 'cyan'],
+    [null, '  ✦ Submitted 3 PRs — operator improvements + docs', 'dim'],
+    [null, '  ✦ Wrote custom sensor plugins for internal tooling', 'dim'],
+  ];
+  for (const [ts, text, cls] of logs) {
+    if (ts) await appendLine(`  ${ts} ${text}`, cls, 80);
+    else     await appendLine(text, cls, 50);
+  }
+  await appendLine('', '', 40);
+  await appendLine('  // END OF LOG STREAM', 'muted');
+}
+
+async function cmdProjects() {
+  await appendLine('// LOADING PROJECT MANIFESTS...', 'purple', 80);
+  await appendLine('', '', 60);
+
+  // QueryMind
+  await appendLine('  ┌── PROJECT 01 ── QueryMind ─────────────────────────────', 'green');
+  await appendLine('  │', 'muted', 30);
+  await appendLine('  │  NL-to-SQL engine powered by RAG + LLMs', 'text', 30);
+  await appendLine('  │', 'muted', 20);
+  await appendLine('  │  WHAT IT DOES:', 'yellow', 30);
+  await appendLine('  │  Ask "show me top customers by revenue last quarter"', 'dim', 30);
+  await appendLine('  │  → QueryMind generates SQL + executes + returns results', 'dim', 30);
+  await appendLine('  │', 'muted', 20);
+  await appendLine('  │  STACK: LangChain · GPT-4 · Pinecone · FastAPI · Postgres', 'cyan', 30);
+  await appendLine('  │  STATUS: ', 'dim', 30);
+  await appendRaw(`  <span class="tag green">Open Source</span> &nbsp;<span class="tag yellow">v1.2.0</span> &nbsp;<span class="tag cyan">RAG</span>`, 30);
+  await appendLine('  │', 'muted', 20);
+  await appendLine('  └────────────────────────────────────────────────────────', 'green', 30);
+  await appendLine('', '', 40);
+
+  // AIOps Engine
+  await appendLine('  ┌── PROJECT 02 ── AIOps Engine ──────────────────────────', 'purple');
+  await appendLine('  │', 'muted', 30);
+  await appendLine('  │  LLM-powered infrastructure automation platform', 'text', 30);
+  await appendLine('  │', 'muted', 20);
+  await appendLine('  │  WHAT IT DOES:', 'yellow', 30);
+  await appendLine('  │  Ingests Kafka log streams → detects anomalies via LLM', 'dim', 30);
+  await appendLine('  │  → auto-creates JIRA tickets → suggests remediations', 'dim', 30);
+  await appendLine('  │', 'muted', 20);
+  await appendLine('  │  STACK: Kafka · Mistral 7B · LangGraph · Go · Redis · K8s', 'cyan', 30);
+  await appendLine('  │  STATUS: ', 'dim', 30);
+  await appendRaw(`  <span class="tag purple">Internal @ HPE</span> &nbsp;<span class="tag cyan">LLM</span> &nbsp;<span class="tag yellow">Production</span>`, 30);
+  await appendLine('  │', 'muted', 20);
+  await appendLine('  └────────────────────────────────────────────────────────', 'purple', 30);
+}
+
+async function cmdSkills() {
+  await appendLine('// LOADING SKILL MODULES...', 'purple', 80);
+  await appendLine('', '', 60);
+
+  const sections = [
+    {
+      label: '> data_engineering --list',
+      color: 'green',
+      items: [
+        ['Apache Kafka',  92],
+        ['Apache Spark',  88],
+        ['Apache Airflow',85],
+        ['dbt',           78],
+        ['Flink / HDFS',  72],
+      ]
+    },
+    {
+      label: '> ai_systems --list',
+      color: 'purple',
+      items: [
+        ['LLMs (GPT-4, Claude, Mistral)', 90],
+        ['RAG / LangChain / LlamaIndex', 88],
+        ['Vector DBs (Pinecone, Weaviate)', 82],
+        ['LangGraph / AI Agents',         80],
+        ['Embeddings + Fine-tuning',       74],
+      ]
+    },
+    {
+      label: '> backend --list',
+      color: 'cyan',
+      items: [
+        ['Python + FastAPI', 93],
+        ['Go',               78],
+        ['Docker + K8s',     85],
+        ['AWS (S3,EMR,Lambda,Glue)', 82],
+        ['PostgreSQL / Redis',  87],
+      ]
+    }
+  ];
+
+  for (const sec of sections) {
+    await appendLine('  ' + sec.label, sec.color, 60);
+    await sleep(100);
+    for (const [name, pct] of sec.items) {
+      const bar = Math.round(pct / 100 * 20);
+      const filled = '█'.repeat(bar);
+      const empty  = '░'.repeat(20 - bar);
+      await appendLine(`    ${name.padEnd(32)} [${filled}${empty}] ${pct}%`, 'dim', 50);
+    }
+    await appendLine('', '', 40);
+  }
+}
+
+async function cmdCurrently() {
+  await appendLine('// FETCHING LIVE WORK QUEUE...', 'purple', 80);
+  await appendLine('', '', 60);
+  await appendLine('  ● ACTIVE TASKS', 'green bold');
+  await appendLine('', '', 30);
+
+  const tasks = [
+    ['[IN PROGRESS]', 'Building AI agents for data workflow automation', 'cyan'],
+    ['[IN PROGRESS]', 'Optimizing Kafka consumer groups — 3ms p99 target', 'cyan'],
+    ['[RESEARCH]',    'Exploring LangGraph for multi-agent orchestration', 'yellow'],
+    ['[BUILDING]',    'Open-source RAG evaluation framework (EvalRAG)', 'green'],
+    ['[LEARNING]',    'Rust for high-throughput data serialization', 'purple'],
+  ];
+
+  for (const [status, task, cls] of tasks) {
+    const dot = cls === 'cyan' ? '⟳' : cls === 'green' ? '◉' : '◈';
+    await appendLine(`  ${dot}  ${status.padEnd(16)} ${task}`, cls, 120);
+  }
+
+  await appendLine('', '', 40);
+  await appendLine('  // Refreshing in 30s...', 'muted');
+  const bar = document.createElement('div');
+  bar.style.cssText = 'padding:4px 20px 8px;';
+  const bg = document.createElement('div');
+  bg.className = 'progress-bg';
+  bg.style.width = '200px';
+  const fill = document.createElement('div');
+  fill.className = 'progress-bar';
+  fill.style.width = '0%';
+  bg.appendChild(fill);
+  bar.appendChild(bg);
+  body.appendChild(bar);
+  body.scrollTop = body.scrollHeight;
+  await sleep(100);
+  fill.style.width = '100%';
+  fill.style.transition = 'width 2s linear';
+}
+
+async function cmdContact() {
+  await appendLine('// CONTACT CHANNELS OPEN', 'purple', 80);
+  await appendLine('', '', 60);
+
+  const links = [
+    ['GitHub',   'github.com/abhishek',            '▸', 'green'],
+    ['LinkedIn', 'linkedin.com/in/abhishek',        '▸', 'cyan'],
+    ['Email',    'abhishek@email.com',              '▸', 'yellow'],
+    ['Twitter',  '@abhishek_dev',                   '▸', 'purple'],
+  ];
+
+  for (const [label, url, icon, cls] of links) {
+    const el = document.createElement('div');
+    el.style.cssText = 'padding:2px 20px; display:flex; align-items:center; gap:12px; cursor:pointer;';
+    el.innerHTML = `
+      <span style="color:${cls==='green'?'var(--green)':cls==='cyan'?'var(--cyan)':cls==='yellow'?'var(--yellow)':'var(--purple)'}; font-size:13px">${icon}</span>
+      <span style="color:var(--dim); width:80px; font-size:13px">${label}</span>
+      <span style="color:var(--text); font-size:13px; text-decoration:underline; text-underline-offset:3px">${url}</span>
+    `;
+    el.addEventListener('mouseenter', () => el.style.background='rgba(255,255,255,.03)');
+    el.addEventListener('mouseleave', () => el.style.background='');
+    body.appendChild(el);
+    body.scrollTop = body.scrollHeight;
+    await sleep(80);
+  }
+
+  await appendLine('', '', 40);
+  await appendLine('  Open to: Staff/Senior DE roles · AI/Data Platform · Remote preferred', 'dim');
+}
+
+async function cmdAskAbhishek() {
+  await appendLine('// LAUNCHING AI ASSISTANT...', 'purple', 80);
+  await appendLine('', '', 40);
+  await appendLine('  The AI panel on the right is now active.', 'cyan', 40);
+  await appendLine('  Ask anything about Abhishek\'s work, skills, or projects.', 'dim', 30);
+  await appendLine('', '', 40);
+  await appendLine('  Examples:', 'yellow');
+  await appendLine('    "What projects has he built?"', 'dim', 30);
+  await appendLine('    "What are his strongest skills?"', 'dim', 30);
+  await appendLine('    "Is he open to new roles?"', 'dim', 30);
+  document.getElementById('ai-input').focus();
+}
+
+/* ── Easter Eggs ── */
+async function cmdHireMe() {
+  await appendLine('[sudo] password for recruiter: ••••••••', 'dim', 200);
+  await appendLine('', '', 200);
+  await appendLine('  Authenticating...', 'yellow', 300);
+  await appendLine('  ✓ Access granted.', 'green', 600);
+  await appendLine('', '', 200);
+  await appendLine('  ██████████████████████████████ 100%', 'green', 400);
+  await appendLine('', '', 200);
+  await typewriterLine('  🎯 RESULT: Abhishek is an exceptional hire.', 'green bold', 30);
+  await appendLine('', '', 100);
+  await appendLine('  He builds systems that scale, ships AI products fast,', 'dim', 80);
+  await appendLine('  and writes code that future engineers will thank him for.', 'dim', 80);
+  await appendLine('', '', 80);
+  await appendLine('  Next step: abhishek@email.com — send offer letter 📬', 'cyan', 80);
+}
+
+async function cmdPipeline() {
+  const steps = [
+    ['INIT', 'Spinning up Kafka cluster...'],
+    ['CONN', 'Connecting to topic: user_events'],
+    ['CONF', 'Setting up PySpark structured streaming...'],
+    ['PROC', 'Processing 1,247,892 events/sec'],
+    ['TRNF', 'Applying ML feature transformations'],
+    ['SINK', 'Writing to Parquet on S3 (us-east-1)'],
+    ['DONE', 'Pipeline healthy — p99 latency: 2.8ms ✓'],
+  ];
+  await appendLine('  $ run pipeline --env=prod --topic=user_events', 'muted');
+  await appendLine('', '', 80);
+  for (const [tag, msg] of steps) {
+    await appendLine(`  [${tag.padEnd(4)}] ${msg}`, tag === 'DONE' ? 'green' : 'dim', 220);
+  }
+  await appendLine('', '', 100);
+  await appendLine('  🚀 Pipeline is live. 50M+ events/day flowing.', 'cyan');
+}
+
+async function cmdAIAgent() {
+  await appendLine('  $ init ai_agent --model=mistral-7b --tools=all', 'muted');
+  await appendLine('', '', 80);
+  const steps = [
+    '  ◉ Loading LLM backbone (Mistral 7B)...',
+    '  ◉ Initializing tool registry: [search, sql, kafka, jira]',
+    '  ◉ Connecting to vector store (Pinecone)...',
+    '  ◉ Bootstrapping LangGraph state machine...',
+    '  ◉ Agent online — awaiting instructions.',
+  ];
+  for (const s of steps) {
+    await appendLine(s, 'purple', 280);
+  }
+  await appendLine('', '', 100);
+  await typewriterLine('  > What shall I automate for you today, Abhishek?', 'green', 25);
+}
+
+async function cmdNotFound(cmd) {
+  const msgs = [
+    `  zsh: command not found: ${cmd}`,
+    `  Did you mean: ${Object.keys(COMMANDS).sort(() => Math.random()-.5)[0]}?`,
+    '',
+    '  Type `help` to see available commands.',
+  ];
+  await appendLine(msgs[0], 'red');
+  await appendLine(msgs[1], 'dim', 80);
+  await appendLine(msgs[2]);
+  await appendLine(msgs[3], 'muted', 60);
+}
+
+/* ════════════════════════════════════════════════
+   INPUT HANDLING
+════════════════════════════════════════════════ */
+function quickCmd(cmd) {
+  input.value = cmd;
+  updateHints();
+  input.focus();
+}
+
+const allCmds = Object.keys(COMMANDS);
+
+function updateHints() {
+  const val = input.value.toLowerCase().trim();
+  hint.textContent = '';
+  if (!val) { sugg.style.display='none'; return; }
+
+  const matches = allCmds.filter(c => c.startsWith(val) && c !== val);
+  if (matches.length === 0) { sugg.style.display='none'; return; }
+
+  // inline ghost hint
+  if (matches[0] !== val) hint.textContent = matches[0].slice(val.length);
+
+  // dropdown
+  sugg.innerHTML = '';
+  matches.slice(0,5).forEach((m,i) => {
+    const el = document.createElement('div');
+    el.className = 'suggestion-item' + (i===0?' selected':'');
+    el.innerHTML = `<span>${m}</span><span class="hint">${COMMANDS[m]?.desc||''}</span>`;
+    el.addEventListener('click', () => {
+      input.value = m;
+      sugg.style.display='none';
+      hint.textContent='';
+      input.focus();
+    });
+    sugg.appendChild(el);
+  });
+  sugg.style.display='block';
+}
+
+input.addEventListener('input', updateHints);
+
+input.addEventListener('keydown', async e => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const selected = sugg.querySelector('.selected');
+    if (selected) {
+      input.value = selected.querySelector('span').textContent;
+      sugg.style.display='none';
+      hint.textContent='';
+    }
+    return;
+  }
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (histIdx < history.length-1) {
+      histIdx++;
+      input.value = history[histIdx];
+      updateHints();
+    }
+    return;
+  }
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (histIdx > 0) { histIdx--; input.value = history[histIdx]; }
+    else { histIdx=-1; input.value=''; }
+    updateHints();
+    return;
+  }
+  if (e.key === 'Enter') {
+    if (printing) return;
+    const cmd = input.value;
+    input.value='';
+    hint.textContent='';
+    sugg.style.display='none';
+    if (!cmd.trim()) return;
+    printing=true;
+    await runCommand(cmd);
+    printing=false;
+    input.focus();
+  }
+});
+
+document.addEventListener('click', () => {
+  sugg.style.display='none';
+});
+
+/* ════════════════════════════════════════════════
+   AI CHAT (Anthropic API)
+════════════════════════════════════════════════ */
+const aiMessages = document.getElementById('ai-messages');
+const aiInput    = document.getElementById('ai-input');
+const aiSend     = document.getElementById('ai-send');
+
+let chatHistory = [];
+
+async function sendAIMessage() {
+  const q = aiInput.value.trim();
+  if (!q) return;
+  aiInput.value = '';
+
+  // User bubble
+  appendAIBubble(q, 'user');
+  chatHistory.push({ role:'user', content: q });
+
+  // Thinking indicator
+  const thinking = appendAIBubble('⠋ processing...', 'assistant', true);
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system: `You are an AI assistant embedded in Abhishek's terminal portfolio. Answer questions about Abhishek based on this context:
+
+${RESUME_CONTEXT}
+
+Respond in a concise, terminal-style format. Use bullet points with ▸. Keep it under 150 words. Be direct and helpful. Start responses without preamble.`,
+        messages: chatHistory
+      })
+    });
+
+    const data = await res.json();
+    const text = data.content?.[0]?.text || 'No response received.';
+
+    chatHistory.push({ role:'assistant', content: text });
+
+    // Replace thinking with real response
+    thinking.remove();
+    const bubble = appendAIBubble('', 'assistant');
+    await typewriterBubble(bubble, text, 12);
+
+  } catch(err) {
+    thinking.remove();
+    appendAIBubble(`// Error: ${err.message}. Check API key.`, 'assistant');
+  }
+}
+
+function appendAIBubble(text, role, isThinking=false) {
+  const el = document.createElement('div');
+  el.className = `ai-msg ${role}`;
+  el.innerHTML = `<div class="label">${role==='user'?'// you':'// abhishek.ai'}</div>${text}`;
+  if (isThinking) el.style.opacity = '0.6';
+  aiMessages.appendChild(el);
+  aiMessages.scrollTop = aiMessages.scrollHeight;
+  return el;
+}
+
+async function typewriterBubble(el, text, speed=15) {
+  const label = el.querySelector('.label');
+  let content = '';
+  for (const ch of text) {
+    content += ch;
+    el.innerHTML = '';
+    el.appendChild(label);
+    el.insertAdjacentText('beforeend', content);
+    aiMessages.scrollTop = aiMessages.scrollHeight;
+    await sleep(speed);
+  }
+}
+
+aiSend.addEventListener('click', sendAIMessage);
+aiInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendAIMessage();
+});
+
+/* ════════════════════════════════════════════════
+   BOOT
+════════════════════════════════════════════════ */
+boot();
+</script>
+</body>
+</html>
