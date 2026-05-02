@@ -9,18 +9,19 @@ interface TerminalProps {
 interface CommandLog {
   id: number;
   text?: string;
-  type: 'prompt' | 'output' | 'error' | 'success' | 'dim' | 'widget';
+  type: 'prompt' | 'output' | 'error' | 'success' | 'dim' | 'widget' | 'cyan';
   widgetType?: 'projects' | 'experience' | 'skills' | 'blog' | 'resume';
 }
 
 const BOOT_SEQUENCE = [
   { text: 'abhishek@ai-engineer:~', type: 'prompt' },
   { text: '', type: 'output' },
+  { text: '  Cloud Developer @ Hewlett Packard Enterprise (HPE)', type: 'output' },
   { text: '  Backend & Applied AI Engineer · Distributed Systems · LLMs', type: 'output' },
   { text: '  v3.0.0 · zsh 5.9 · ⬡ node 20 · 🐍 python 3.11', type: 'dim' },
   { text: '', type: 'output' },
   { text: '  Press `/` for Command Palette, or type `help`.', type: 'dim' },
-  { text: '  Try: whoami · projects · experience · skills · blog · resume', type: 'dim' },
+  { text: '  Try: whoami · projects · experience · skills · blog · resume · contact', type: 'dim' },
   { text: '', type: 'output' }
 ];
 
@@ -85,9 +86,16 @@ export const Terminal: React.FC<TerminalProps> = ({ forceCommand }) => {
         appendLog('  clear        - clear terminal', 'dim');
         break;
       case 'whoami':
-        appendLog('  Abhishek Kaushik', 'success');
-        appendLog('  Backend & Applied AI Engineer building systems that survive production.', 'output');
-        appendLog('  Current Focus: RAG Architectures, Distributed Platforms, LLM Agents', 'dim');
+        appendLog('  Abhishek Kaushik (@abhishek09827)', 'success');
+        appendLog('  Cloud Developer @ Hewlett Packard Enterprise, Bengaluru', 'output');
+        appendLog('  Backend & Applied AI Engineer', 'output');
+        appendLog('', 'output');
+        appendLog('  [ ENGINEERING PHILOSOPHY ]', 'cyan');
+        appendLog('  • Build systems, not scripts', 'dim');
+        appendLog('  • Design for retries, failure, and scale', 'dim');
+        appendLog('  • Observability is not optional', 'dim');
+        appendLog('  • AI should reduce operational complexity', 'dim');
+        appendLog('  • Measure latency, cost, and reliability', 'dim');
         break;
       case 'experience':
         appendLog('Fetching experience timeline...', 'dim');
@@ -110,9 +118,13 @@ export const Terminal: React.FC<TerminalProps> = ({ forceCommand }) => {
         appendLog('', 'widget', 'resume');
         break;
       case 'contact':
-        appendLog('  GitHub: github.com/abhishek09827', 'output');
-        appendLog('  LinkedIn: linkedin.com/in/abhishek-kaushik-0a6a16243', 'output');
-        appendLog('  Email: abhishekk09827@gmail.com', 'output');
+        appendLog('  GitHub   : github.com/abhishek09827', 'output');
+        appendLog('  LinkedIn : linkedin.com/in/abhishek-kaushik-0a6a16243', 'output');
+        appendLog('  Email    : abhishekk09827@gmail.com', 'output');
+        appendLog('  Hashnode : hashnode.com/@abhishekk09827', 'output');
+        appendLog('  LeetCode : leetcode.com/abhishekk09827', 'output');
+        appendLog('', 'output');
+        appendLog('  "Open to remote roles in Backend, Data Platforms & Applied AI"', 'cyan');
         break;
       case 'clear':
         setLogs([]);
@@ -195,6 +207,7 @@ export const Terminal: React.FC<TerminalProps> = ({ forceCommand }) => {
           if (log.type === 'error') color = 'var(--red)';
           if (log.type === 'success') color = 'var(--green)';
           if (log.type === 'dim') color = 'var(--dim)';
+          if (log.type as string === 'cyan') color = 'var(--cyan)';
 
           return (
             <div key={log.id} style={{ color, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'var(--font)', marginBottom: '4px' }}>
