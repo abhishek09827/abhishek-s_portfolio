@@ -1,7 +1,14 @@
 import React from 'react';
-import { TerminalSquare, ShieldAlert, GitBranch, Settings, Code, FileText } from 'lucide-react';
+import { TerminalSquare, GitBranch, Settings, Code, Activity, Radar, Database } from 'lucide-react';
 
-export const LeftNav: React.FC = () => {
+export type TabId = 'core' | 'graph' | 'matrix' | 'radar' | 'activity';
+
+interface LeftNavProps {
+  activeTab: TabId;
+  onTabSelect: (tab: TabId) => void;
+}
+
+export const LeftNav: React.FC<LeftNavProps> = ({ activeTab, onTabSelect }) => {
   return (
     <div className="glass-panel" style={{
       width: '60px',
@@ -20,10 +27,11 @@ export const LeftNav: React.FC = () => {
       
       {/* Nav Icons */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', flex: 1 }}>
-        <NavIcon icon={<Code />} active />
-        <NavIcon icon={<GitBranch />} />
-        <NavIcon icon={<ShieldAlert />} />
-        <NavIcon icon={<FileText />} />
+        <NavIcon icon={<Code />} active={activeTab === 'core'} onClick={() => onTabSelect('core')} tooltip="CORE" />
+        <NavIcon icon={<GitBranch />} active={activeTab === 'graph'} onClick={() => onTabSelect('graph')} tooltip="GRAPH" />
+        <NavIcon icon={<Database />} active={activeTab === 'matrix'} onClick={() => onTabSelect('matrix')} tooltip="MATRIX" />
+        <NavIcon icon={<Radar />} active={activeTab === 'radar'} onClick={() => onTabSelect('radar')} tooltip="RADAR" />
+        <NavIcon icon={<Activity />} active={activeTab === 'activity'} onClick={() => onTabSelect('activity')} tooltip="ACTIVITY" />
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -33,13 +41,18 @@ export const LeftNav: React.FC = () => {
   );
 };
 
-const NavIcon = ({ icon, active = false }: { icon: React.ReactNode, active?: boolean }) => (
-  <div style={{
-    color: active ? 'var(--cyan)' : 'var(--muted)',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    filter: active ? 'drop-shadow(0 0 8px var(--cyan))' : 'none'
-  }}>
+const NavIcon = ({ icon, active = false, onClick, tooltip }: { icon: React.ReactNode, active?: boolean, onClick?: () => void, tooltip?: string }) => (
+  <div 
+    onClick={onClick}
+    title={tooltip}
+    style={{
+      color: active ? 'var(--cyan)' : 'var(--muted)',
+      cursor: 'pointer',
+      transition: 'all 0.2s',
+      filter: active ? 'drop-shadow(0 0 8px var(--cyan))' : 'none',
+      transform: active ? 'scale(1.1)' : 'scale(1)'
+    }}
+  >
     {React.cloneElement(icon as React.ReactElement<any>, { size: 20 })}
   </div>
 );
