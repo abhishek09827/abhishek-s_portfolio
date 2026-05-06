@@ -1246,11 +1246,10 @@ export const ActivityView: React.FC = () => {
   const [weeklyTotals, setWeeklyTotals] = useState<number[]>([]);
   const [githubStats, setGithubStats] = useState({ repos: 0, followers: 0, stars: 0, following: 0 });
   const [languages, setLanguages] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = import.meta.env.VITE_GITHUB_TOKEN;
-    const headers = token ? { Authorization: `token ${token}` } : {};
+    const headers: HeadersInit = token ? { 'Authorization': `token ${token}` } : {};
 
     // Fetch heatmap
     fetch('https://github-contributions-api.jogruber.de/v4/abhishek09827')
@@ -1299,7 +1298,6 @@ export const ActivityView: React.FC = () => {
 
         setGithubStats(prev => ({ ...prev, stars: totalStars }));
         setLanguages(langMap);
-        setLoading(false);
       })
       .catch(console.error);
   }, []);
