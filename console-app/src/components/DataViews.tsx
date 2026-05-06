@@ -1242,18 +1242,20 @@ export const RadarView: React.FC = () => {
 
 // --- ACTIVITY VIEW ---
 export const ActivityView: React.FC = () => {
-  const [contributions, setContributions] = useState<number[][]>([]);
-  const [weeklyTotals, setWeeklyTotals] = useState<number[]>([]);
-  const [githubStats, setGithubStats] = useState({ repos: 74, followers: 7 });
+  const [githubStats, setGithubStats] = useState({ repos: 0, followers: 0, stars: 0, following: 0 });
+  const [languages, setLanguages] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const token = import.meta.env.VITE_GITHUB_TOKEN;
+    const headers = token ? { Authorization: `token ${token}` } : {};
+
     // Fetch heatmap
     fetch('https://github-contributions-api.jogruber.de/v4/abhishek09827')
       .then(res => res.json())
       .then(data => {
         if (!data || !data.contributions) return;
-        const allContributions = data.contributions;
-        const recent = allContributions.slice(-364); 
+        const recent = data.contributions.slice(-364); 
         const weeks: number[][] = [];
         const totals: number[] = [];
         for (let i = 0; i < recent.length; i += 7) {
@@ -1267,12 +1269,35 @@ export const ActivityView: React.FC = () => {
       .catch(console.error);
 
     // Fetch user stats
-    fetch('https://api.github.com/users/abhishek09827')
+    fetch('https://api.github.com/users/abhishek09827', { headers })
       .then(res => res.json())
       .then(data => {
-        if (data.public_repos !== undefined) {
-          setGithubStats({ repos: data.public_repos, followers: data.followers });
-        }
+        setGithubStats(prev => ({ 
+          ...prev, 
+          repos: data.public_repos, 
+          followers: data.followers,
+          following: data.following
+        }));
+      })
+      .catch(console.error);
+
+    // Fetch repos for stars and languages
+    fetch('https://api.github.com/users/abhishek09827/repos?per_page=100', { headers })
+      .then(res => res.json())
+      .then((repos: any[]) => {
+        let totalStars = 0;
+        const langMap: Record<string, number> = {};
+        
+        repos.forEach(repo => {
+          totalStars += repo.stargazers_count;
+          if (repo.language) {
+            langMap[repo.language] = (langMap[repo.language] || 0) + 1;
+          }
+        });
+
+        setGithubStats(prev => ({ ...prev, stars: totalStars }));
+        setLanguages(langMap);
+        setLoading(false);
       })
       .catch(console.error);
   }, []);
@@ -1387,36 +1412,57 @@ export const ActivityView: React.FC = () => {
         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
           {[
             { label: 'Repositories', val: githubStats.repos, icon: '📁', color: 'var(--cyan)' },
-            { label: 'Stars Earned', val: 18, icon: '⭐', color: 'var(--amber)' },
+            { label: 'Stars Earned', val: githubStats.stars, icon: '⭐', color: 'var(--amber)' },
             { label: 'Followers', val: githubStats.followers, icon: '👥', color: 'var(--purple)' },
-            { label: 'PyPI Package', val: '1', icon: '📦', color: 'var(--green)' }
+            { label: 'Following', val: githubStats.following, icon: '🔗', color: 'var(--green)' }
           ].map(stat => (
-            <div key={stat.label} style={{ flex: '1 1 150px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', padding: '16px', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+            <motion.div 
+              key={stat.label} 
+              whileHover={{ y: -5, background: 'rgba(255,255,255,0.05)' }}
+              style={{ flex: '1 1 150px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', padding: '16px', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'default', transition: 'background 0.2s' }}
+            >
               <div style={{ fontSize: '24px' }}>{stat.icon}</div>
               <div style={{ color: 'var(--text)', fontSize: '20px', fontWeight: 'bold' }}>{stat.val}</div>
-              <div style={{ color: stat.color, fontSize: '11px', textTransform: 'uppercase' }}>{stat.label}</div>
-            </div>
+              <div style={{ color: stat.color, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px' }}>{stat.label}</div>
+            </motion.div>
           ))}
         </div>
 
         {/* SECTION 3: LANGUAGE BREAKDOWN */}
         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border)' }}>
-          <div style={{ color: 'var(--dim)', fontSize: '11px', fontWeight: 'bold', marginBottom: '12px' }}>REPOSITORY LANGUAGE BREAKDOWN</div>
+          <div style={{ color: 'var(--dim)', fontSize: '11px', fontWeight: 'bold', marginBottom: '12px', textTransform: 'uppercase' }}>Repository Language Breakdown (Real-time)</div>
           
-          <div style={{ height: '12px', width: '100%', display: 'flex', borderRadius: '6px', overflow: 'hidden', marginBottom: '12px' }}>
-            <motion.div initial={{ width: 0 }} animate={{ width: '45%' }} transition={{ duration: 1 }} style={{ background: 'var(--cyan)' }} title="Python: 45%" />
-            <motion.div initial={{ width: 0 }} animate={{ width: '25%' }} transition={{ duration: 1, delay: 0.2 }} style={{ background: 'var(--purple)' }} title="TypeScript: 25%" />
-            <motion.div initial={{ width: 0 }} animate={{ width: '15%' }} transition={{ duration: 1, delay: 0.4 }} style={{ background: 'var(--green)' }} title="Go: 15%" />
-            <motion.div initial={{ width: 0 }} animate={{ width: '10%' }} transition={{ duration: 1, delay: 0.6 }} style={{ background: 'var(--amber)' }} title="JavaScript: 10%" />
-            <motion.div initial={{ width: 0 }} animate={{ width: '5%' }} transition={{ duration: 1, delay: 0.8 }} style={{ background: 'var(--dim)' }} title="Other: 5%" />
+          <div style={{ height: '12px', width: '100%', display: 'flex', borderRadius: '6px', overflow: 'hidden', marginBottom: '16px' }}>
+            {Object.entries(languages).sort((a, b) => b[1] - a[1]).map(([lang, count], i) => {
+              const total = Object.values(languages).reduce((a, b) => a + b, 0);
+              const pct = (count / total) * 100;
+              const colors = ['var(--cyan)', 'var(--purple)', 'var(--green)', 'var(--amber)', 'var(--dim)', 'var(--red)', 'var(--blue)'];
+              return (
+                <motion.div 
+                  key={lang}
+                  initial={{ width: 0 }} 
+                  animate={{ width: `${pct}%` }} 
+                  transition={{ duration: 1, delay: i * 0.1 }} 
+                  style={{ background: colors[i % colors.length] }} 
+                  title={`${lang}: ${Math.round(pct)}%`} 
+                />
+              );
+            })}
           </div>
 
-          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', fontSize: '12px' }}>
-            <div><span style={{ color: 'var(--cyan)', fontWeight: 'bold' }}>Python (45%)</span> — <span style={{ color: 'var(--dim)' }}>QueryMind-DW, OI-Engine, SageScan</span></div>
-            <div><span style={{ color: 'var(--purple)', fontWeight: 'bold' }}>TypeScript (25%)</span> — <span style={{ color: 'var(--dim)' }}>SuraRevamped</span></div>
-            <div><span style={{ color: 'var(--green)', fontWeight: 'bold' }}>Go (15%)</span> — <span style={{ color: 'var(--dim)' }}>SageScan CLI</span></div>
-            <div><span style={{ color: 'var(--amber)', fontWeight: 'bold' }}>JavaScript (10%)</span> — <span style={{ color: 'var(--dim)' }}>HindiTranscriptionBot</span></div>
-            <div><span style={{ color: 'var(--dim)', fontWeight: 'bold' }}>Other (5%)</span></div>
+          <div style={{ display: 'flex', gap: '16px 24px', flexWrap: 'wrap', fontSize: '12px' }}>
+            {Object.entries(languages).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([lang, count], i) => {
+              const total = Object.values(languages).reduce((a, b) => a + b, 0);
+              const pct = Math.round((count / total) * 100);
+              const colors = ['var(--cyan)', 'var(--purple)', 'var(--green)', 'var(--amber)', 'var(--dim)', 'var(--red)', 'var(--blue)'];
+              return (
+                <div key={lang} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: colors[i % colors.length] }} />
+                  <span style={{ color: 'var(--text)', fontWeight: 'bold' }}>{lang}</span>
+                  <span style={{ color: 'var(--dim)' }}>({pct}%)</span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
