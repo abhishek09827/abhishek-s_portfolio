@@ -1244,6 +1244,7 @@ export const RadarView: React.FC = () => {
 export const ActivityView: React.FC = () => {
   const [contributions, setContributions] = useState<number[][]>([]);
   const [weeklyTotals, setWeeklyTotals] = useState<number[]>([]);
+  const [weekDates, setWeekDates] = useState<string[]>([]);
   const [githubStats, setGithubStats] = useState({ repos: 0, followers: 0, stars: 0, following: 0 });
   const [languages, setLanguages] = useState<Record<string, number>>({});
 
@@ -1284,15 +1285,18 @@ export const ActivityView: React.FC = () => {
         
         const weeks: number[][] = [];
         const totals: number[] = [];
+        const dates: string[] = [];
         
         weeksData.forEach((week: any) => {
           const days = week.contributionDays.map((d: any) => d.contributionCount);
           weeks.push(days);
           totals.push(days.reduce((a: number, b: number) => a + b, 0));
+          dates.push(week.contributionDays[0]?.date || '');
         });
         
         setContributions(weeks);
         setWeeklyTotals(totals);
+        setWeekDates(dates);
       })
       .catch(console.error);
     } else {
@@ -1304,13 +1308,17 @@ export const ActivityView: React.FC = () => {
           const recent = data.contributions.slice(-364); 
           const weeks: number[][] = [];
           const totals: number[] = [];
+          const dates: string[] = [];
           for (let i = 0; i < recent.length; i += 7) {
-            const week = recent.slice(i, i + 7).map((c: { count: number }) => c.count);
+            const weekSlice = recent.slice(i, i + 7);
+            const week = weekSlice.map((c: { count: number }) => c.count);
             weeks.push(week);
             totals.push(week.reduce((a: number, b: number) => a + b, 0));
+            dates.push(weekSlice[0]?.date || '');
           }
           setContributions(weeks);
           setWeeklyTotals(totals);
+          setWeekDates(dates);
         })
         .catch(console.error);
     }
@@ -1351,7 +1359,7 @@ export const ActivityView: React.FC = () => {
   const maxTotal = Math.max(...weeklyTotals, 1);
 
   // Highest weeks to label
-  const sortedWeeks = [...weeklyTotals].map((val, idx) => ({val, idx})).sort((a,b) => b.val - a.val);
+  const sortedWeeks = [...weeklyTotals].map((val, idx) => ({ val, idx, date: weekDates[idx] })).sort((a,b) => b.val - a.val);
   const topWeeks = sortedWeeks.slice(0, 4);
 
   return (
@@ -1399,28 +1407,53 @@ export const ActivityView: React.FC = () => {
                 {/* Annotations */}
                 <AnimatePresence>
                   {topWeeks.map((tw, i) => {
-                    const labels = ["SageScan build sprint", "QueryMind-DW development", "OI-Engine development", "OSS contribution period"];
+                    const dateStr = tw.date ? new Date(tw.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Unknown Date';
+                    const label = `Week of ${dateStr}: ${tw.val} commits`;
+                    const color = i % 2 === 0 ? 'var(--cyan)' : 'var(--purple)';
                     return (
                       <motion.div 
                         key={i}
                         initial={{ opacity: 0, y: -10 }} 
                         animate={{ opacity: 1, y: 0 }} 
-                        transition={{ delay: 1.5 + i * 0.2 }} 
+                        transition={{ delay: 1.5 + i * 0.2 }}
+                        whileHover="hover"
                         style={{ 
                           position: 'absolute', 
-                          top: 40 - (tw.val / maxTotal) * 36 - 20, 
+                          top: 40 - (tw.val / maxTotal) * 36, 
                           left: `${(tw.idx / weeklyTotals.length) * 100}%`, 
-                          fontSize: '10px', 
-                          color: i % 2 === 0 ? 'var(--cyan)' : 'var(--purple)',
-                          whiteSpace: 'nowrap',
-                          transform: 'translateX(-50%)',
-                          background: 'rgba(0,0,0,0.6)',
-                          padding: '2px 4px',
-                          borderRadius: '2px',
-                          border: `1px solid ${i % 2 === 0 ? 'var(--cyan)' : 'var(--purple)'}`
+                          transform: 'translate(-50%, -50%)',
+                          cursor: 'pointer',
+                          zIndex: 10
                         }}
                       >
-                        {labels[i]}
+                        {/* Interactive Dot */}
+                        <motion.div 
+                          style={{ width: '8px', height: '8px', borderRadius: '50%', background: color, border: '2px solid var(--bg)', boxShadow: `0 0 8px ${color}` }} 
+                          whileHover={{ scale: 1.5 }}
+                        />
+                        {/* Hover Label */}
+                        <motion.div 
+                          variants={{ hover: { opacity: 1, y: -5 } }}
+                          initial={{ opacity: 0, y: 0 }}
+                          style={{
+                            position: 'absolute',
+                            bottom: '100%',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            fontSize: '10px', 
+                            color: 'var(--text)',
+                            whiteSpace: 'nowrap',
+                            background: 'rgba(0,0,0,0.85)',
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            border: `1px solid ${color}`,
+                            marginBottom: '6px',
+                            pointerEvents: 'none',
+                            backdropFilter: 'blur(4px)'
+                          }}
+                        >
+                          {label}
+                        </motion.div>
                       </motion.div>
                     )
                   })}
