@@ -1251,23 +1251,69 @@ export const ActivityView: React.FC = () => {
     const token = import.meta.env.VITE_GITHUB_TOKEN;
     const headers: HeadersInit = token ? { 'Authorization': `token ${token}` } : {};
 
-    // Fetch heatmap
-    fetch('https://github-contributions-api.jogruber.de/v4/abhishek09827')
+    // Fetch heatmap (GraphQL with PAT for real data)
+    if (token) {
+      const query = `
+        query {
+          user(login: "abhishek09827") {
+            contributionsCollection {
+              contributionCalendar {
+                weeks {
+                  contributionDays {
+                    contributionCount
+                  }
+                }
+              }
+            }
+          }
+        }
+      `;
+
+      fetch('https://api.github.com/graphql', {
+        method: 'POST',
+        headers: {
+          'Authorization': `bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query })
+      })
       .then(res => res.json())
       .then(data => {
-        if (!data || !data.contributions) return;
-        const recent = data.contributions.slice(-364); 
+        const weeksData = data?.data?.user?.contributionsCollection?.contributionCalendar?.weeks;
+        if (!weeksData) return;
+        
         const weeks: number[][] = [];
         const totals: number[] = [];
-        for (let i = 0; i < recent.length; i += 7) {
-          const week = recent.slice(i, i + 7).map((c: { count: number }) => c.count);
-          weeks.push(week);
-          totals.push(week.reduce((a: number, b: number) => a + b, 0));
-        }
+        
+        weeksData.forEach((week: any) => {
+          const days = week.contributionDays.map((d: any) => d.contributionCount);
+          weeks.push(days);
+          totals.push(days.reduce((a: number, b: number) => a + b, 0));
+        });
+        
         setContributions(weeks);
         setWeeklyTotals(totals);
       })
       .catch(console.error);
+    } else {
+      // Fallback to public third-party API if token is missing
+      fetch('https://github-contributions-api.jogruber.de/v4/abhishek09827')
+        .then(res => res.json())
+        .then(data => {
+          if (!data || !data.contributions) return;
+          const recent = data.contributions.slice(-364); 
+          const weeks: number[][] = [];
+          const totals: number[] = [];
+          for (let i = 0; i < recent.length; i += 7) {
+            const week = recent.slice(i, i + 7).map((c: { count: number }) => c.count);
+            weeks.push(week);
+            totals.push(week.reduce((a: number, b: number) => a + b, 0));
+          }
+          setContributions(weeks);
+          setWeeklyTotals(totals);
+        })
+        .catch(console.error);
+    }
 
     // Fetch user stats
     fetch('https://api.github.com/users/abhishek09827', { headers })
