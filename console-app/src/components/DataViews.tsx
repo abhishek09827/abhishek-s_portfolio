@@ -1249,40 +1249,35 @@ export const ActivityView: React.FC = () => {
   const [languages, setLanguages] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    const token = import.meta.env.VITE_GITHUB_TOKEN;
-    const headers: HeadersInit = token ? { 'Authorization': `token ${token}` } : {};
-
-    // Fetch heatmap (GraphQL with PAT for real data)
-    if (token) {
-      const query = `
-        query {
-          user(login: "abhishek09827") {
-            contributionsCollection {
-              contributionCalendar {
-                weeks {
-                  contributionDays {
-                    contributionCount
-                  }
-                }
-              }
-            }
-          }
-        }
-      `;
-
-      fetch('https://api.github.com/graphql', {
-        method: 'POST',
-        headers: {
-          'Authorization': `bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query })
-      })
+    // Fetch heatmap (GraphQL via secure backend proxy)
+    fetch('/api/github?type=heatmap')
       .then(res => res.json())
       .then(data => {
         const weeksData = data?.data?.user?.contributionsCollection?.contributionCalendar?.weeks;
-        if (!weeksData) return;
-        
+        if (!weeksData) {
+          // Fallback to public API if backend is unreachable or fails
+          fetch('https://github-contributions-api.jogruber.de/v4/abhishek09827')
+            .then(res => res.json())
+            .then(fallbackData => {
+              if (!fallbackData || !fallbackData.contributions) return;
+              const recent = fallbackData.contributions.slice(-364); 
+              const weeks: number[][] = [];
+              const totals: number[] = [];
+              const dates: string[] = [];
+              for (let i = 0; i < recent.length; i += 7) {
+                const weekSlice = recent.slice(i, i + 7);
+                const week = weekSlice.map((c: { count: number }) => c.count);
+                weeks.push(week);
+                totals.push(week.reduce((a: number, b: number) => a + b, 0));
+                dates.push(weekSlice[0]?.date || '');
+              }
+              setContributions(weeks);
+              setWeeklyTotals(totals);
+              setWeekDates(dates);
+            })
+            .catch(console.error);
+          return;
+        }
         const weeks: number[][] = [];
         const totals: number[] = [];
         const dates: string[] = [];
@@ -1293,40 +1288,18 @@ export const ActivityView: React.FC = () => {
           totals.push(days.reduce((a: number, b: number) => a + b, 0));
           dates.push(week.contributionDays[0]?.date || '');
         });
-        
+
         setContributions(weeks);
         setWeeklyTotals(totals);
         setWeekDates(dates);
       })
       .catch(console.error);
-    } else {
-      // Fallback to public third-party API if token is missing
-      fetch('https://github-contributions-api.jogruber.de/v4/abhishek09827')
-        .then(res => res.json())
-        .then(data => {
-          if (!data || !data.contributions) return;
-          const recent = data.contributions.slice(-364); 
-          const weeks: number[][] = [];
-          const totals: number[] = [];
-          const dates: string[] = [];
-          for (let i = 0; i < recent.length; i += 7) {
-            const weekSlice = recent.slice(i, i + 7);
-            const week = weekSlice.map((c: { count: number }) => c.count);
-            weeks.push(week);
-            totals.push(week.reduce((a: number, b: number) => a + b, 0));
-            dates.push(weekSlice[0]?.date || '');
-          }
-          setContributions(weeks);
-          setWeeklyTotals(totals);
-          setWeekDates(dates);
-        })
-        .catch(console.error);
-    }
 
-    // Fetch user stats
-    fetch('https://api.github.com/users/abhishek09827', { headers })
+    // Fetch user stats (via secure backend proxy)
+    fetch('/api/github?type=stats')
       .then(res => res.json())
       .then(data => {
+        if (!data || data.error) return;
         setGithubStats(prev => ({ 
           ...prev, 
           repos: data.public_repos, 
@@ -1336,10 +1309,11 @@ export const ActivityView: React.FC = () => {
       })
       .catch(console.error);
 
-    // Fetch repos for stars and languages
-    fetch('https://api.github.com/users/abhishek09827/repos?per_page=100', { headers })
+    // Fetch repos for stars and languages (via secure backend proxy)
+    fetch('/api/github?type=repos')
       .then(res => res.json())
       .then((repos: any[]) => {
+        if (!repos || !Array.isArray(repos)) return;
         let totalStars = 0;
         const langMap: Record<string, number> = {};
         
