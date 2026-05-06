@@ -18,39 +18,6 @@ interface TraceStep {
 type PortfolioTabId = 'core' | 'graph' | 'radar' | 'activity';
 
 // --- CONSTANTS ---
-const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_KEY || '';
-const MODEL = "openai/gpt-oss-120b:free";
-
-const PORTFOLIO_FACTS = `
-Verified facts:
-- You are Abhishek Kaushik, a Cloud Developer at HPE Bengaluru and Backend & Applied AI Engineer.
-- SageScan: Go CLI + Python stats engine, JSON stdin/stdout bridge, 17 validator types, PyPI published.
-- OI-Engine: CrewAI-based AIOps system, FastAPI gateway, Redis/Postgres/pgvector, confidence gating for alerts.
-- QueryMind-DW: Kafka -> MinIO -> dbt -> DuckDB/Postgres -> Streamlit, NL-to-SQL with RAG and validation.
-- Skills: Kafka, dbt, Airflow, RAG, Go, Python, FastAPI, PostgreSQL, Redis.
-- Tone: first person, concise, practical, a little informal, never robotic.
-- Behavior: if unsure, say so plainly and redirect to a relevant project, section, or contact path.
-- Navigation tags: [view graph], [check skills], [see design], [go home], [view activity].
-`;
-
-const SYSTEM_PROMPT = `
-You are Abhishek Kaushik speaking as yourself inside your portfolio.
-Write in first person. Sound like a real engineer talking to a visitor, not like a generic chatbot.
-Keep answers short by default. Give the gist first, then add only the most useful detail.
-Never invent facts, metrics, or work history. If something is not in the facts below, say you are not fully sure.
-When a question is outside the portfolio scope, redirect the user to a relevant section with a navigation tag instead of guessing.
-
-${PORTFOLIO_FACTS}
-
-When you mention an architecture or project, keep it outcome-oriented:
-- what problem it solves
-- what approach you used
-- what the result was
-
-Use navigation tags naturally, for example: "If you want the architecture, [view graph]."
-If asked about experience, answer in 1 to 2 short paragraphs, not a resume dump.
-`;
-
 const STARTER_QUESTIONS = [
   "What's the gist of SageScan?",
   "Why did you use CrewAI in OI-Engine?",
@@ -153,35 +120,20 @@ export const AIAgent: React.FC<{ activeTab?: PortfolioTabId, onTabChange?: (tab:
     setIsReasoning(false);
     setIsStreaming(true);
 
-    if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY === 'your_key_here') {
-      setIsStreaming(false);
-      const fallback = getFallbackResponse(query);
-      setMessages(prev => [...prev, { role: 'assistant', content: fallback }]);
-      return;
-    }
-
     try {
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      const response = await fetch("/api/chat", {
         method: "POST",
-          headers: {
-            "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-            "X-Title": "Abhishek Portfolio Agent",
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-          model: MODEL,
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            ...messages.slice(-4).map(m => ({ role: m.role, content: m.content })),
-            { role: "user", content: query }
-          ],
-          temperature: 0.2,
-          top_p: 0.9,
-          stream: true
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: messages.slice(-4).map(m => ({ role: m.role, content: m.content })),
+          query: query
         })
       });
 
-      if (!response.ok) throw new Error("API Error");
+      if (!response.ok) {
+        // Fallback gracefully if API proxy fails or key is missing
+        throw new Error("API Proxy Error");
+      }
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
