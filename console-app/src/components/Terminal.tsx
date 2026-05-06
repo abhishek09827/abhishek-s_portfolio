@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { HexLogo } from './HexLogo';
 import { InlineWidgets } from './InlineWidgets';
 
@@ -10,18 +10,23 @@ interface CommandLog {
   id: number;
   text?: string;
   type: 'prompt' | 'output' | 'error' | 'success' | 'dim' | 'widget' | 'cyan';
-  widgetType?: 'projects' | 'experience' | 'skills' | 'blog' | 'resume';
+  widgetType?: 'projects' | 'experience' | 'skills' | 'blog' | 'resume' | 'contact';
 }
 
-const BOOT_SEQUENCE = [
+type BootLine = {
+  text: string;
+  type: CommandLog['type'];
+};
+
+const BOOT_SEQUENCE: BootLine[] = [
   { text: 'abhishek@ai-engineer:~', type: 'prompt' },
   { text: '', type: 'output' },
   { text: '  Cloud Developer @ Hewlett Packard Enterprise (HPE)', type: 'output' },
-  { text: '  Backend & Applied AI Engineer · Distributed Systems · LLMs', type: 'output' },
-  { text: '  v3.0.0 · zsh 5.9 · ⬡ node 20 · 🐍 python 3.11', type: 'dim' },
+  { text: '  Backend & Applied AI Engineer | Distributed Systems | LLMs', type: 'output' },
+  { text: '  v3.0.0 | zsh 5.9 | node 20 | python 3.11', type: 'dim' },
   { text: '', type: 'output' },
   { text: '  Press `/` for Command Palette, or type `help`.', type: 'dim' },
-  { text: '  Try: whoami · projects · experience · skills · blog · resume · contact', type: 'dim' },
+  { text: '  Try: whoami | projects | experience | skills | blog | resume | contact', type: 'dim' },
   { text: '', type: 'output' }
 ];
 
@@ -35,39 +40,24 @@ export const Terminal: React.FC<TerminalProps> = ({ forceCommand }) => {
   const idCounter = useRef(0);
   const [booted, setBooted] = useState(false);
 
-  const appendLog = (text: string, type: CommandLog['type'] = 'output', widgetType?: CommandLog['widgetType']) => {
-    setLogs(prev => [...prev, { id: idCounter.current++, text, type, widgetType }]);
-  };
-
-  useEffect(() => {
-    // Initial Boot
-    setTimeout(() => {
-      let delay = 0;
-      BOOT_SEQUENCE.forEach((line) => {
-        setTimeout(() => appendLog(line.text, line.type as any), delay);
-        delay += 50;
-      });
-      setTimeout(() => {
-        setBooted(true);
-        inputRef.current?.focus();
-      }, delay);
-    }, 800); // Wait for logo
+  const appendLogs = useCallback((entries: Array<{ text?: string; type?: CommandLog['type']; widgetType?: CommandLog['widgetType'] }>) => {
+    setLogs(prev => [
+      ...prev,
+      ...entries.map(entry => ({
+        id: idCounter.current++,
+        text: entry.text,
+        type: entry.type ?? 'output',
+        widgetType: entry.widgetType
+      }))
+    ]);
   }, []);
 
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [logs]);
-
-  useEffect(() => {
-    if (forceCommand && booted) {
-      handleCommand(forceCommand);
-    }
-  }, [forceCommand, booted]);
-
-  const handleCommand = (cmdStr: string) => {
+  const handleCommand = useCallback((cmdStr: string) => {
     const cmd = cmdStr.trim().toLowerCase();
-    appendLog(`abhishek@ai-engineer:~$ ${cmdStr}`, 'prompt');
-    
+    const batch: Array<{ text?: string; type?: CommandLog['type']; widgetType?: CommandLog['widgetType'] }> = [
+      { text: `abhishek@ai-engineer:~$ ${cmdStr}`, type: 'prompt' }
+    ];
+
     if (!cmd) return;
 
     setHistory(prev => [cmdStr, ...prev]);
@@ -75,65 +65,108 @@ export const Terminal: React.FC<TerminalProps> = ({ forceCommand }) => {
 
     switch(cmd) {
       case 'help':
-        appendLog('AVAILABLE COMMANDS', 'output');
-        appendLog('  whoami       - about me', 'dim');
-        appendLog('  projects     - github projects & open source', 'dim');
-        appendLog('  experience   - work history', 'dim');
-        appendLog('  skills       - technical proficiencies', 'dim');
-        appendLog('  blog         - latest articles on Hashnode', 'dim');
-        appendLog('  resume       - download PDF resume', 'dim');
-        appendLog('  contact      - get in touch', 'dim');
-        appendLog('  clear        - clear terminal', 'dim');
+        batch.push(
+          { text: 'AVAILABLE COMMANDS', type: 'output' },
+          { text: '  whoami       - about me', type: 'dim' },
+          { text: '  projects     - github projects & open source', type: 'dim' },
+          { text: '  experience   - work history', type: 'dim' },
+          { text: '  skills       - technical proficiencies', type: 'dim' },
+          { text: '  blog         - latest articles on Hashnode', type: 'dim' },
+          { text: '  resume       - download PDF resume', type: 'dim' },
+          { text: '  contact      - get in touch', type: 'dim' },
+          { text: '  clear        - clear terminal', type: 'dim' }
+        );
         break;
       case 'whoami':
-        appendLog('  Abhishek Kaushik (@abhishek09827)', 'success');
-        appendLog('  Cloud Developer @ Hewlett Packard Enterprise, Bengaluru', 'output');
-        appendLog('  Backend & Applied AI Engineer', 'output');
-        appendLog('', 'output');
-        appendLog('  [ ENGINEERING PHILOSOPHY ]', 'cyan');
-        appendLog('  • Build systems, not scripts', 'dim');
-        appendLog('  • Design for retries, failure, and scale', 'dim');
-        appendLog('  • Observability is not optional', 'dim');
-        appendLog('  • AI should reduce operational complexity', 'dim');
-        appendLog('  • Measure latency, cost, and reliability', 'dim');
+        batch.push(
+          { text: '  Abhishek Kaushik (@abhishek09827)', type: 'success' },
+          { text: '  Cloud Developer @ Hewlett Packard Enterprise, Bengaluru', type: 'output' },
+          { text: '  Backend & Applied AI Engineer', type: 'output' },
+          { text: '', type: 'output' },
+          { text: '  Quick links: GitHub | LinkedIn | Resume | Contact', type: 'cyan' },
+          { text: '', type: 'output' },
+          { text: '  [ ENGINEERING PHILOSOPHY ]', type: 'cyan' },
+          { text: '  - Build systems, not scripts', type: 'dim' },
+          { text: '  - Design for retries, failure, and scale', type: 'dim' },
+          { text: '  - Observability is not optional', type: 'dim' },
+          { text: '  - AI should reduce operational complexity', type: 'dim' },
+          { text: '  - Measure latency, cost, and reliability', type: 'dim' }
+        );
         break;
       case 'experience':
-        appendLog('Fetching experience timeline...', 'dim');
-        appendLog('', 'widget', 'experience');
+        batch.push(
+          { text: 'Fetching experience timeline...', type: 'dim' },
+          { text: '', type: 'widget', widgetType: 'experience' }
+        );
         break;
       case 'projects':
-        appendLog('Pulling repositories from github.com/abhishek09827...', 'dim');
-        appendLog('', 'widget', 'projects');
+        batch.push(
+          { text: 'Pulling repositories from github.com/abhishek09827...', type: 'dim' },
+          { text: '', type: 'widget', widgetType: 'projects' }
+        );
         break;
       case 'skills':
-        appendLog('Loading skill matrices...', 'dim');
-        appendLog('', 'widget', 'skills');
+        batch.push(
+          { text: 'Loading skill matrices...', type: 'dim' },
+          { text: '', type: 'widget', widgetType: 'skills' }
+        );
         break;
       case 'blog':
-        appendLog('Fetching articles from hashnode...', 'dim');
-        appendLog('', 'widget', 'blog');
+        batch.push(
+          { text: 'Fetching articles from hashnode...', type: 'dim' },
+          { text: '', type: 'widget', widgetType: 'blog' }
+        );
         break;
       case 'resume':
-        appendLog('Generating PDF...', 'dim');
-        appendLog('', 'widget', 'resume');
+        batch.push(
+          { text: 'Generating PDF...', type: 'dim' },
+          { text: '', type: 'widget', widgetType: 'resume' }
+        );
         break;
       case 'contact':
-        appendLog('  GitHub   : github.com/abhishek09827', 'output');
-        appendLog('  LinkedIn : linkedin.com/in/abhishek-kaushik-0a6a16243', 'output');
-        appendLog('  Email    : abhishekk09827@gmail.com', 'output');
-        appendLog('  Hashnode : hashnode.com/@abhishekk09827', 'output');
-        appendLog('  LeetCode : leetcode.com/abhishekk09827', 'output');
-        appendLog('', 'output');
-        appendLog('  "Open to remote roles in Backend, Data Platforms & Applied AI"', 'cyan');
+        batch.push(
+          { text: 'Opening contact shortcuts...', type: 'dim' },
+          { text: '', type: 'widget', widgetType: 'contact' }
+        );
         break;
       case 'clear':
         setLogs([]);
         break;
       default:
-        appendLog(`zsh: command not found: ${cmdStr}`, 'error');
-        appendLog(`Type \`help\` to see available commands.`, 'dim');
+        batch.push(
+          { text: `zsh: command not found: ${cmdStr}`, type: 'error' },
+          { text: 'Type `help` to see available commands.', type: 'dim' }
+        );
     }
-  };
+    if (cmd !== 'clear') {
+      appendLogs(batch);
+    }
+  }, [appendLogs]);
+
+  useEffect(() => {
+    // Initial Boot
+    const timer = window.setTimeout(() => {
+      setLogs(BOOT_SEQUENCE.map(line => ({
+        id: idCounter.current++,
+        text: line.text,
+        type: line.type
+      })));
+      setBooted(true);
+      inputRef.current?.focus();
+    }, 800);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [logs.length]);
+
+  useEffect(() => {
+    if (forceCommand && booted) {
+      const timer = window.setTimeout(() => handleCommand(forceCommand), 0);
+      return () => window.clearTimeout(timer);
+    }
+  }, [forceCommand, booted, handleCommand]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -165,7 +198,8 @@ export const Terminal: React.FC<TerminalProps> = ({ forceCommand }) => {
       display: 'flex',
       flexDirection: 'column',
       borderRadius: '12px',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      minWidth: 0
     }} onClick={() => inputRef.current?.focus()}>
       
       <div style={{
@@ -246,4 +280,3 @@ export const Terminal: React.FC<TerminalProps> = ({ forceCommand }) => {
     </div>
   );
 };
-

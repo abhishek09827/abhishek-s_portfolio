@@ -8,6 +8,15 @@ export const TelemetryHud: React.FC = () => {
     net: 1.2,
     latency: 14
   });
+  const [isCompact, setIsCompact] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 900px)');
+    const update = () => setIsCompact(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -25,27 +34,33 @@ export const TelemetryHud: React.FC = () => {
     <div className="glass-panel" style={{
       display: 'flex',
       alignItems: 'center',
-      gap: '24px',
-      padding: '8px 24px',
+      gap: isCompact ? '12px' : '24px',
+      padding: isCompact ? '8px 12px' : '8px 24px',
       borderRadius: '8px',
       position: 'relative',
       zIndex: 10,
-      width: 'fit-content',
+      width: isCompact ? '100%' : 'fit-content',
       margin: '0 auto',
-      fontSize: '12px'
+      fontSize: '12px',
+      flexWrap: 'wrap',
+      justifyContent: 'center'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--cyan)' }}>
         <Cpu size={14} />
         <span>CPU: {metrics.cpu.toFixed(1)}%</span>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--purple)' }}>
-        <Database size={14} />
-        <span>MEM: {metrics.mem.toFixed(1)}%</span>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--green)' }}>
-        <Network size={14} />
-        <span>NET: {metrics.net.toFixed(2)} Gbps</span>
-      </div>
+      {!isCompact && (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--purple)' }}>
+            <Database size={14} />
+            <span>MEM: {metrics.mem.toFixed(1)}%</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--green)' }}>
+            <Network size={14} />
+            <span>NET: {metrics.net.toFixed(2)} Gbps</span>
+          </div>
+        </>
+      )}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--yellow)' }}>
         <Activity size={14} />
         <span>LAT: {metrics.latency.toFixed(0)} ms</span>

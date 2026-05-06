@@ -27,9 +27,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isVisible, onClo
 
   useEffect(() => {
     if (isVisible) {
-      setInput('');
-      setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 100);
+      const timer = window.setTimeout(() => {
+        setInput('');
+        setSelectedIndex(0);
+        inputRef.current?.focus();
+      }, 0);
+      return () => window.clearTimeout(timer);
     }
   }, [isVisible]);
 

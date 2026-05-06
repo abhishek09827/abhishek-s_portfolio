@@ -101,6 +101,10 @@ html, body {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
 }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 /* Layout Utilities */
 .app-container {
@@ -144,5 +148,101 @@ html, body {
 @media (min-width: 900px) {
   .main-content {
     flex-direction: row;
+  }
+}
+
+@media (max-width: 900px) {
+  html, body {
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  #root {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .app-container {
+    min-height: 100vh;
+    height: auto;
+    padding: 12px;
+    gap: 12px;
+    overflow: visible;
+  }
+
+  .main-content {
+    gap: 12px;
+    width: 100%;
+  }
+
+  .desktop-nav {
+    width: 100% !important;
+    min-height: auto !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 12px 14px !important;
+    gap: 12px !important;
+    border-radius: 14px !important;
+    position: sticky;
+    top: 12px;
+    z-index: 25;
+  }
+
+  .desktop-nav .nav-icons,
+  .desktop-nav .nav-footer {
+    flex-direction: row !important;
+    gap: 16px !important;
+    align-items: center !important;
+    justify-content: center;
+    flex: 0 1 auto !important;
+  }
+
+  .desktop-nav .nav-icons {
+    order: 2;
+  }
+
+  .desktop-nav .nav-footer {
+    order: 3;
+  }
+
+  .desktop-nav .nav-brand {
+    order: 1;
+    flex-shrink: 0;
+  }
+
+  .desktop-nav svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .glass-panel {
+    border-radius: 14px;
+  }
+
+  .main-content > * {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .ai-agent-shell {
+    max-width: 100% !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .desktop-nav {
+    top: 8px;
+    padding: 10px 12px !important;
+  }
+
+  .desktop-nav .nav-icons {
+    gap: 12px !important;
+  }
+
+  .desktop-nav .nav-footer {
+    gap: 12px !important;
   }
 }

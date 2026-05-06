@@ -18,8 +18,18 @@ const SYSTEM_LOGS = [
 export const BackgroundLogs: React.FC = () => {
   const [logs, setLogs] = useState<{ id: number; text: string; y: number; opacity: number }[]>([]);
   const idCounter = useRef(0);
+  const [isCompact, setIsCompact] = useState(false);
 
   useEffect(() => {
+    const media = window.matchMedia('(max-width: 900px)');
+    const update = () => setIsCompact(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+
+  useEffect(() => {
+    if (isCompact) return;
     const interval = setInterval(() => {
       if (Math.random() > 0.6) {
         const text = SYSTEM_LOGS[Math.floor(Math.random() * SYSTEM_LOGS.length)];
@@ -40,7 +50,9 @@ export const BackgroundLogs: React.FC = () => {
     }, 800);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isCompact]);
+
+  if (isCompact) return null;
 
   return (
     <div style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>

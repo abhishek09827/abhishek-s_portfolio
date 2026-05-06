@@ -1,23 +1,12 @@
-import React, { useState } from 'react';
+const fs = require('fs');
+
+const inlineWidgetsContent = `import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Briefcase, Code, Download, FileText, ArrowRight } from 'lucide-react';
+import { Briefcase, Code, Download, FileText, ArrowRight, Github } from 'lucide-react';
 
 interface InlineWidgetsProps {
-  type: 'projects' | 'experience' | 'skills' | 'blog' | 'resume' | 'contact';
+  type: 'projects' | 'experience' | 'skills' | 'blog' | 'resume';
 }
-
-type ProjectCardModel = {
-  id: string;
-  title: string;
-  oneliner: string;
-  github: string;
-  blog?: string;
-  color: string;
-  tags: string[];
-  metrics: string[];
-  facts: string[];
-  flow: string;
-};
 
 export const InlineWidgets: React.FC<InlineWidgetsProps> = ({ type }) => {
   return (
@@ -32,7 +21,6 @@ export const InlineWidgets: React.FC<InlineWidgetsProps> = ({ type }) => {
       {type === 'skills' && <SkillsWidget />}
       {type === 'blog' && <BlogWidget />}
       {type === 'resume' && <ResumeWidget />}
-      {type === 'contact' && <ContactWidget />}
     </motion.div>
   );
 };
@@ -47,18 +35,18 @@ const ProjectsWidget = () => {
       blog: 'https://ab-blog.hashnode.dev/i-built-a-cli-data-quality-tool-that-goes-beyond-schema-checks-here-s-what-i-learned',
       color: 'var(--cyan)',
       tags: ['Go', 'Python', 'Cobra', 'Pandas', 'Pydantic v2', 'GPT-4', 'PyPI', 'YAML', 'CLI'],
-      metrics: ['125,547 rows/sec', '100% drift accuracy', '599MB peak memory'],
       facts: [
-        'Throughput: 125,547 rows/sec (chunked 2GB CSV support)',
-        'Drift detection: 100% accuracy at ≥1σ shift (KS test, PSI)',
         'Go CLI for speed + single binary distribution',
         'Python engine for rich pandas/statistical validation',
-        '17 validator types including schema, statistical, and drift',
-        'AI layer: GPT-4 explains validation failures in plain English',
+        '17 validator types including drift detection (KS test, PSI)',
+        'AI layer: GPT-4 auto-generates YAML rules from raw CSV',
+        'AI explains validation failures in plain English',
+        'Big-data: chunked reads up to 2GB CSV, Parquet support',
         'CI-ready: --fail-fast flag, JSON output mode',
-        'Published to PyPI: pip install sagescan-data'
+        'Published to PyPI: pip install sagescan-data',
+        'PII never leaves machine — only column stats sent to LLM'
       ],
-      flow: 'YAML Config → Go CLI (Cobra) → JSON Bridge (stdin/stdout) → Python Engine (Pandas) → Validator Registry → CLI Report'
+      flow: 'User YAML → Go CLI (Cobra) → JSON Bridge → Python Engine (Pandas) → Validator Registry (17 types) → Output Report'
     },
     {
       id: 'oi',
@@ -67,16 +55,15 @@ const ProjectsWidget = () => {
       github: 'https://github.com/abhishek09827/Operational-Intelligence-Engine',
       color: 'var(--purple)',
       tags: ['Python', 'Kafka', 'PySpark', 'Mistral 7B', 'LangChain', 'JIRA API', 'Redis'],
-      metrics: ['<5s latency', '~60% noise reduction', '100% data residency'],
       facts: [
         'Two-stage detection: statistical fast path + LLM deep analysis',
         'Filters ~90% of noise cheaply before calling LLM',
         'Confidence threshold reduces false positive pages by ~60%',
-        'Mistral 7B: self-hostable, 100% data residency maintained',
-        'Mean time from anomaly to JIRA ticket: under 5 seconds',
-        'Feedback loop: resolved incidents become future few-shot examples'
+        'Mistral 7B chosen: self-hostable, no data leaves network',
+        'Feedback loop: resolved incidents become future few-shot examples',
+        'Mean time from anomaly to JIRA ticket: under 5 seconds'
       ],
-      flow: 'Kafka Logs → Z-score baseline filter → Mistral 7B RCA → Confidence evaluation → JIRA API'
+      flow: 'Kafka Logs → Spark Structured Streaming → Z-score baseline filter → Mistral 7B → Confidence evaluation → JIRA API'
     },
     {
       id: 'querymind',
@@ -85,16 +72,15 @@ const ProjectsWidget = () => {
       github: 'https://github.com/abhishek09827/QueryMind-DW',
       color: 'var(--green)',
       tags: ['Python', 'GPT-4', 'RAG', 'LangChain', 'Postgres', 'Redis', 'FastAPI', 'Pinecone'],
-      metrics: ['75% SQL accuracy', '1.0ms cache latency', '35% cost reduction'],
       facts: [
-        'NL-to-SQL accuracy: 75% on complex window/agg benchmarks',
-        'Cache hit latency: 1.0ms (vs 14.9s on LLM miss)',
-        'Safety layer: Blocks 100% of DROP/DELETE/TRUNCATE attempts',
-        'RAG over fine-tuning: dynamic schema context retrieval',
-        'SQL Validator: prevents halluincated schemas before execution',
-        'Redis cache cut LLM API costs ~35% on repeat queries'
+        'RAG over fine-tuning: schema changes weekly, RAG always fresh',
+        'SQL Validator prevents hallucinated column names reaching Postgres',
+        'Safety layer blocks destructive SQL before execution',
+        'Redis cache cut LLM API costs ~35% on repeated queries',
+        '~87% SQL accuracy on benchmark set',
+        'p95 latency: 1.2s end-to-end'
       ],
-      flow: 'User Query → RAG Schema Retriever (Pinecone) → GPT-4 → SQL Safety Validator → Postgres → Redis Cache'
+      flow: 'User Query → Classifier → Schema Retriever (Pinecone) → Prompt Builder → GPT-4 → SQL Validator → Postgres → Redis Cache'
     }
   ];
 
@@ -127,12 +113,12 @@ const ProjectsWidget = () => {
   );
 };
 
-const ProjectCard = ({ project }: { project: ProjectCardModel }) => {
+const ProjectCard = ({ project }: { project: any }) => {
   const [expanded, setExpanded] = useState(false);
   const color = project.color;
 
   return (
-    <div style={{ border: `1px solid ${color}40`, borderRadius: '8px', background: `linear-gradient(135deg, ${color}05, transparent)`, overflow: 'hidden' }}>
+    <div style={{ border: \`1px solid \${color}40\`, borderRadius: '8px', background: \`linear-gradient(135deg, \${color}05, transparent)\`, overflow: 'hidden' }}>
       <div onClick={() => setExpanded(!expanded)} style={{ padding: '16px', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
@@ -142,13 +128,8 @@ const ProjectCard = ({ project }: { project: ProjectCardModel }) => {
           <div style={{ color: 'var(--dim)' }}>{expanded ? '▼' : '▶'}</div>
         </div>
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-          {project.metrics.map((m: string) => (
-            <span key={m} style={{ background: `${color}25`, color, padding: '3px 10px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', border: `1px solid ${color}50`, boxShadow: `0 0 10px ${color}15` }}>{m}</span>
-          ))}
-        </div>
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', opacity: 0.7 }}>
-          {project.tags.slice(0, 5).map((t: string) => (
-            <span key={t} style={{ color, fontSize: '10px' }}>#{t}</span>
+          {project.tags.map((t: string) => (
+            <span key={t} style={{ background: \`\${color}15\`, color, padding: '2px 8px', borderRadius: '4px', fontSize: '10px', border: \`1px solid \${color}30\` }}>{t}</span>
           ))}
         </div>
       </div>
@@ -159,13 +140,13 @@ const ProjectCard = ({ project }: { project: ProjectCardModel }) => {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            style={{ overflow: 'hidden', borderTop: `1px solid ${color}20` }}
+            style={{ overflow: 'hidden', borderTop: \`1px solid \${color}20\` }}
           >
             <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '20px', background: 'var(--terminal-bg)' }}>
               
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                 <a href={project.github} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text)', background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '4px', textDecoration: 'none', border: '1px solid var(--border)' }} onClick={(e) => e.stopPropagation()}>
-                  <Code size={12} /> View on GitHub
+                  <Github size={12} /> View on GitHub
                 </a>
                 {project.blog && (
                   <a href={project.blog} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text)', background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '4px', textDecoration: 'none', border: '1px solid var(--border)' }} onClick={(e) => e.stopPropagation()}>
@@ -176,7 +157,7 @@ const ProjectCard = ({ project }: { project: ProjectCardModel }) => {
 
               <div>
                 <div style={{ color: 'var(--dim)', fontSize: '11px', letterSpacing: '1px', marginBottom: '8px' }}>ARCHITECTURE_FLOW</div>
-                <div style={{ color: 'var(--text)', fontSize: '12px', fontFamily: 'var(--font)', background: 'rgba(0,0,0,0.3)', padding: '12px', borderRadius: '6px', borderLeft: `2px solid ${color}` }}>
+                <div style={{ color: 'var(--text)', fontSize: '12px', fontFamily: 'var(--font)', background: 'rgba(0,0,0,0.3)', padding: '12px', borderRadius: '6px', borderLeft: \`2px solid \${color}\` }}>
                   {project.flow}
                 </div>
               </div>
@@ -203,7 +184,7 @@ const ProjectCard = ({ project }: { project: ProjectCardModel }) => {
 const CompactTile = ({ title, tag, color }: { title: string, tag: string, color: string }) => (
   <div style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', gap: '12px' }}>
     <div style={{ color: 'var(--text)', fontSize: '13px', fontWeight: 'bold' }}>{title}</div>
-    <div style={{ color, fontSize: '10px', background: `${color}15`, padding: '2px 6px', borderRadius: '4px' }}>{tag}</div>
+    <div style={{ color, fontSize: '10px', background: \`\${color}15\`, padding: '2px 6px', borderRadius: '4px' }}>{tag}</div>
   </div>
 );
 
@@ -266,9 +247,9 @@ const SkillGroup = ({ title, skills, color }: { title: string, skills: { name: s
           <div style={{ flex: 1, height: '4px', background: 'var(--border)', borderRadius: '2px', overflow: 'hidden' }}>
             <motion.div 
               initial={{ width: 0 }} 
-              animate={{ width: `${s.pct}%` }} 
+              animate={{ width: \`\${s.pct}%\` }} 
               transition={{ duration: 1, delay: i * 0.1 }}
-              style={{ height: '100%', background: color, boxShadow: `0 0 8px ${color}` }} 
+              style={{ height: '100%', background: color, boxShadow: \`0 0 8px \${color}\` }} 
             />
           </div>
           <div style={{ width: '30px', fontSize: '10px', color: 'var(--muted)', textAlign: 'right' }}>{s.pct}%</div>
@@ -300,54 +281,21 @@ const BlogWidget = () => (
 );
 
 const ResumeWidget = () => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', padding: '16px', background: 'linear-gradient(90deg, rgba(176,106,255,0.1), transparent)', borderRadius: '8px', border: '1px solid var(--purple)' }}>
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--purple)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000' }}>
-          <FileText size={20} />
-        </div>
-        <div>
-          <div style={{ color: 'var(--text)', fontWeight: 'bold', fontSize: '14px' }}>Abhishek_Kaushik_Resume.pdf</div>
-          <div style={{ color: 'var(--dim)', fontSize: '12px' }}>Use this as the quick one-page summary for recruiters.</div>
-        </div>
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'linear-gradient(90deg, rgba(176,106,255,0.1), transparent)', borderRadius: '8px', border: '1px solid var(--purple)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--purple)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000' }}>
+        <FileText size={20} />
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--purple)', color: '#000', padding: '8px 16px', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
-        <Download size={14} /> DOWNLOAD
+      <div>
+        <div style={{ color: 'var(--text)', fontWeight: 'bold', fontSize: '14px' }}>Abhishek_Kaushik_Resume.pdf</div>
+        <div style={{ color: 'var(--dim)', fontSize: '12px' }}>124 KB · Updated recently</div>
       </div>
     </div>
-
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-      <a href="https://github.com/abhishek09827" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'var(--text)', background: 'rgba(0,212,255,0.08)', border: '1px solid rgba(0,212,255,0.2)', padding: '6px 10px', borderRadius: '6px', fontSize: '11px' }}>
-        GitHub
-      </a>
-      <a href="https://www.linkedin.com/in/abhishek-kaushik-0a6a16243/" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'var(--text)', background: 'rgba(176,106,255,0.08)', border: '1px solid rgba(176,106,255,0.2)', padding: '6px 10px', borderRadius: '6px', fontSize: '11px' }}>
-        LinkedIn
-      </a>
-      <a href="mailto:abhishekk09827@gmail.com" style={{ textDecoration: 'none', color: 'var(--text)', background: 'rgba(0,255,157,0.08)', border: '1px solid rgba(0,255,157,0.2)', padding: '6px 10px', borderRadius: '6px', fontSize: '11px' }}>
-        Contact
-      </a>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--purple)', color: '#000', padding: '8px 16px', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
+      <Download size={14} /> DOWNLOAD
     </div>
   </div>
 );
+`;
 
-const ContactWidget = () => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-    <div style={{ color: 'var(--cyan)', fontWeight: 'bold', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-      <ArrowRight size={16} /> QUICK_CONTACT
-    </div>
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-      <a href="https://github.com/abhishek09827" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'var(--text)', background: 'rgba(0,212,255,0.08)', border: '1px solid rgba(0,212,255,0.2)', padding: '8px 12px', borderRadius: '6px', fontSize: '12px' }}>
-        GitHub
-      </a>
-      <a href="https://www.linkedin.com/in/abhishek-kaushik-0a6a16243/" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'var(--text)', background: 'rgba(176,106,255,0.08)', border: '1px solid rgba(176,106,255,0.2)', padding: '8px 12px', borderRadius: '6px', fontSize: '12px' }}>
-        LinkedIn
-      </a>
-      <a href="mailto:abhishekk09827@gmail.com" style={{ textDecoration: 'none', color: 'var(--text)', background: 'rgba(0,255,157,0.08)', border: '1px solid rgba(0,255,157,0.2)', padding: '8px 12px', borderRadius: '6px', fontSize: '12px' }}>
-        Email
-      </a>
-    </div>
-    <div style={{ color: 'var(--dim)', fontSize: '12px', lineHeight: '1.6' }}>
-      If you want the PDF resume, the fastest path is to ask for it directly through email.
-    </div>
-  </div>
-);
+fs.writeFileSync('src/components/InlineWidgets.tsx', inlineWidgetsContent);
