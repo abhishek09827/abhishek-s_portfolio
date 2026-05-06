@@ -1242,6 +1242,8 @@ export const RadarView: React.FC = () => {
 
 // --- ACTIVITY VIEW ---
 export const ActivityView: React.FC = () => {
+  const [contributions, setContributions] = useState<number[][]>([]);
+  const [weeklyTotals, setWeeklyTotals] = useState<number[]>([]);
   const [githubStats, setGithubStats] = useState({ repos: 0, followers: 0, stars: 0, following: 0 });
   const [languages, setLanguages] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -1332,7 +1334,7 @@ export const ActivityView: React.FC = () => {
                   </defs>
                   {/* Fill Area */}
                   <motion.path
-                    d={`M 0 40 L 0 ${40 - (weeklyTotals[0] / maxTotal) * 36} ${weeklyTotals.map((t, i) => `L ${i * 5} ${40 - (t / maxTotal) * 36}`).join(' ')} L ${(weeklyTotals.length - 1) * 5} 40 Z`}
+                    d={`M 0 40 L 0 ${40 - (weeklyTotals[0] / maxTotal) * 36} ${weeklyTotals.map((t: number, i: number) => `L ${i * 5} ${40 - (t / maxTotal) * 36}`).join(' ')} L ${(weeklyTotals.length - 1) * 5} 40 Z`}
                     fill="url(#sparkFill)"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -1340,7 +1342,7 @@ export const ActivityView: React.FC = () => {
                   />
                   {/* Line */}
                   <motion.path
-                    d={`M 0 ${40 - (weeklyTotals[0] / maxTotal) * 36} ${weeklyTotals.map((t, i) => `L ${i * 5} ${40 - (t / maxTotal) * 36}`).join(' ')}`}
+                    d={`M 0 ${40 - (weeklyTotals[0] / maxTotal) * 36} ${weeklyTotals.map((t: number, i: number) => `L ${i * 5} ${40 - (t / maxTotal) * 36}`).join(' ')}`}
                     fill="none"
                     stroke="var(--cyan)"
                     strokeWidth="1.5"
@@ -1383,9 +1385,9 @@ export const ActivityView: React.FC = () => {
 
               {/* Heatmap Grid */}
               <div style={{ display: 'flex', gap: '3px', overflowX: 'auto', paddingBottom: '8px' }}>
-                {contributions.map((week, wIdx) => (
+                {contributions.map((week: number[], wIdx: number) => (
                   <div key={wIdx} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                    {week.map((val, dIdx) => {
+                    {week.map((val: number, dIdx: number) => {
                       let color = '#0d0d0d';
                       if (val > 8) color = '#00ff9d';
                       else if (val > 4) color = '#00a86b';
