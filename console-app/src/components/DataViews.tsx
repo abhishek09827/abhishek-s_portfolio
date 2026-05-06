@@ -1407,8 +1407,9 @@ export const ActivityView: React.FC = () => {
                 {/* Annotations */}
                 <AnimatePresence>
                   {topWeeks.map((tw, i) => {
+                    const projectNames = ["SageScan", "QueryMind-DW", "OI-Engine", "OSS Contributions"];
                     const dateStr = tw.date ? new Date(tw.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Unknown Date';
-                    const label = `Week of ${dateStr}: ${tw.val} commits`;
+                    const label = `${projectNames[i]} — ${dateStr} (${tw.val} commits)`;
                     const color = i % 2 === 0 ? 'var(--cyan)' : 'var(--purple)';
                     return (
                       <motion.div 
