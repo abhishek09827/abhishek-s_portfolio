@@ -450,20 +450,6 @@ export const AIAgent: React.FC<{
                 </motion.div>
               ))}
 
-              {/* Waiting state — spinner + label */}
-              {/* {phase === 'waiting' && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '4px' }}
-                >
-                  <span style={{ color: '#00ff9d', fontSize: '10px', minWidth: '38px', fontWeight: 700 }}>WAIT</span>
-                  <span style={{ color: '#00ff9d', opacity: 0.7, fontSize: '11px' }}>
-                    {waitDots} streaming response...
-                  </span>
-                </motion.div>
-              )} */}
-
               {/* Progress bar */}
               <div style={{
                 height: '1px',
@@ -473,21 +459,7 @@ export const AIAgent: React.FC<{
                 overflow: 'hidden',
                 position: 'relative',
               }}>
-                <motion.div
-                  initial={{ x: '-100%' }}
-                  // animate={{ x: phase === 'waiting' ? '0%' : `-${100 - (visibleCount / traceSteps.length) * 100}%` }}
-                  // transition={phase === 'waiting'
-                  //   ? { duration: 0.4, ease: 'easeOut' }
-                  //   : { duration: 0.3, ease: 'linear' }
-                  // }
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    // background: phase === 'waiting'
-                    //   ? 'linear-gradient(90deg, var(--purple), var(--cyan))'
-                    //   : 'var(--cyan)',
-                  }}
-                />
+
               </div>
             </motion.div>
           )}
