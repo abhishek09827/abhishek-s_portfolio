@@ -2,7 +2,7 @@ export const config = {
   runtime: 'edge',
 };
 
-const MODEL = "minimax/minimax-m2.5:free";
+const MODEL = "openrouter/free";
 
 const PORTFOLIO_FACTS = `
 === IDENTITY ===
