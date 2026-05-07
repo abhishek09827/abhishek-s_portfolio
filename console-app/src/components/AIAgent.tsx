@@ -475,17 +475,17 @@ export const AIAgent: React.FC<{
               }}>
                 <motion.div
                   initial={{ x: '-100%' }}
-                  animate={{ x: phase === 'waiting' ? '0%' : `-${100 - (visibleCount / traceSteps.length) * 100}%` }}
-                  transition={phase === 'waiting'
-                    ? { duration: 0.4, ease: 'easeOut' }
-                    : { duration: 0.3, ease: 'linear' }
-                  }
+                  // animate={{ x: phase === 'waiting' ? '0%' : `-${100 - (visibleCount / traceSteps.length) * 100}%` }}
+                  // transition={phase === 'waiting'
+                  //   ? { duration: 0.4, ease: 'easeOut' }
+                  //   : { duration: 0.3, ease: 'linear' }
+                  // }
                   style={{
                     position: 'absolute',
                     inset: 0,
-                    background: phase === 'waiting'
-                      ? 'linear-gradient(90deg, var(--purple), var(--cyan))'
-                      : 'var(--cyan)',
+                    // background: phase === 'waiting'
+                    //   ? 'linear-gradient(90deg, var(--purple), var(--cyan))'
+                    //   : 'var(--cyan)',
                   }}
                 />
               </div>
