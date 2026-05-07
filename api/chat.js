@@ -2,7 +2,7 @@ export const config = {
   runtime: 'edge',
 };
 
-const MODEL = "qwen/qwen3-8b:free";
+const MODEL = "qwen/qwen3-coder:free";
 
 const PORTFOLIO_FACTS = `
 === IDENTITY ===
