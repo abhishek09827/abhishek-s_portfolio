@@ -379,7 +379,7 @@ export const AIAgent: React.FC<{
 
         {/* ── RLM EXECUTION TRACE ── */}
         <AnimatePresence>
-          {(phase === 'tracing' || phase === 'waiting') && traceSteps.length > 0 && (
+          {phase === 'tracing' && traceSteps.length > 0 && (
             <motion.div
               key="trace"
               initial={{ opacity: 0, y: 6 }}
@@ -451,7 +451,7 @@ export const AIAgent: React.FC<{
               ))}
 
               {/* Waiting state — spinner + label */}
-              {phase === 'waiting' && (
+              {/* {phase === 'waiting' && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -462,7 +462,7 @@ export const AIAgent: React.FC<{
                     {waitDots} streaming response...
                   </span>
                 </motion.div>
-              )}
+              )} */}
 
               {/* Progress bar */}
               <div style={{
@@ -495,7 +495,7 @@ export const AIAgent: React.FC<{
 
         {/* ── STREAMING RESPONSE ── */}
         <AnimatePresence>
-          {phase === 'streaming' && (
+          {(phase === 'streaming' || (phase === 'waiting' && visibleCount >= traceSteps.length)) && (
             <motion.div
               key="streaming"
               initial={{ opacity: 0 }}
