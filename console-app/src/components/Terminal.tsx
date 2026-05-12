@@ -22,7 +22,7 @@ const BOOT_SEQUENCE: BootLine[] = [
   { text: 'abhishek@ai-engineer:~', type: 'prompt' },
   { text: '', type: 'output' },
   { text: '  Cloud Developer @ Hewlett Packard Enterprise (HPE)', type: 'output' },
-  { text: '  Backend & Applied AI Engineer | Distributed Systems | LLMs', type: 'output' },
+  { text: '  Kafka · dbt · RAG · CrewAI · Go · PyPI author · OSS contributor', type: 'output' },
   { text: '  v3.0.0 | zsh 5.9 | node 20 | python 3.11', type: 'dim' },
   { text: '', type: 'output' },
   { text: '  Press `/` for Command Palette, or type `help`.', type: 'dim' },
@@ -63,7 +63,7 @@ export const Terminal: React.FC<TerminalProps> = ({ forceCommand }) => {
     setHistory(prev => [cmdStr, ...prev]);
     setHistoryIdx(-1);
 
-    switch(cmd) {
+    switch (cmd) {
       case 'help':
         batch.push(
           { text: 'AVAILABLE COMMANDS', type: 'output' },
@@ -201,7 +201,7 @@ export const Terminal: React.FC<TerminalProps> = ({ forceCommand }) => {
       overflow: 'hidden',
       minWidth: 0
     }} onClick={() => inputRef.current?.focus()}>
-      
+
       <div style={{
         height: '40px',
         background: 'rgba(255,255,255,0.03)',
@@ -249,13 +249,13 @@ export const Terminal: React.FC<TerminalProps> = ({ forceCommand }) => {
             </div>
           );
         })}
-        
+
         {booted && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
             <span style={{ color: 'var(--cyan)', whiteSpace: 'nowrap' }}>abhishek@ai-engineer:~$</span>
-            <input 
+            <input
               ref={inputRef}
-              type="text" 
+              type="text"
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
