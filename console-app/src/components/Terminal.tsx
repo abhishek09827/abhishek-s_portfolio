@@ -8,27 +8,17 @@ interface TerminalProps {
 
 interface CommandLog {
   id: number;
-  text?: string;
+  text?: string | React.ReactNode;
   type: 'prompt' | 'output' | 'error' | 'success' | 'dim' | 'widget' | 'cyan';
   widgetType?: 'projects' | 'experience' | 'skills' | 'blog' | 'resume' | 'contact';
 }
 
 type BootLine = {
-  text: string;
+  text: string | React.ReactNode;
   type: CommandLog['type'];
 };
 
-const BOOT_SEQUENCE: BootLine[] = [
-  { text: 'abhishek@ai-engineer:~', type: 'prompt' },
-  { text: '', type: 'output' },
-  { text: '  Cloud Developer @ Hewlett Packard Enterprise (HPE)', type: 'output' },
-  { text: '  Kafka · dbt · RAG · CrewAI · Go · PyPI author · OSS contributor', type: 'output' },
-  { text: '  v3.0.0 | zsh 5.9 | node 20 | python 3.11', type: 'dim' },
-  { text: '', type: 'output' },
-  { text: '  Press `/` for Command Palette, or type `help`.', type: 'dim' },
-  { text: '  Try: whoami | projects | experience | skills | blog | resume | contact', type: 'dim' },
-  { text: '', type: 'output' }
-];
+// Removed BOOT_SEQUENCE constant from global scope to move it inside Terminal component for interactivity.
 
 export const Terminal: React.FC<TerminalProps> = ({ forceCommand }) => {
   const [logs, setLogs] = useState<CommandLog[]>([]);
@@ -40,7 +30,7 @@ export const Terminal: React.FC<TerminalProps> = ({ forceCommand }) => {
   const idCounter = useRef(0);
   const [booted, setBooted] = useState(false);
 
-  const appendLogs = useCallback((entries: Array<{ text?: string; type?: CommandLog['type']; widgetType?: CommandLog['widgetType'] }>) => {
+  const appendLogs = useCallback((entries: Array<{ text?: string | React.ReactNode; type?: CommandLog['type']; widgetType?: CommandLog['widgetType'] }>) => {
     setLogs(prev => [
       ...prev,
       ...entries.map(entry => ({
@@ -54,7 +44,7 @@ export const Terminal: React.FC<TerminalProps> = ({ forceCommand }) => {
 
   const handleCommand = useCallback((cmdStr: string) => {
     const cmd = cmdStr.trim().toLowerCase();
-    const batch: Array<{ text?: string; type?: CommandLog['type']; widgetType?: CommandLog['widgetType'] }> = [
+    const batch: Array<{ text?: string | React.ReactNode; type?: CommandLog['type']; widgetType?: CommandLog['widgetType'] }> = [
       { text: `abhishek@ai-engineer:~$ ${cmdStr}`, type: 'prompt' }
     ];
 
@@ -67,14 +57,14 @@ export const Terminal: React.FC<TerminalProps> = ({ forceCommand }) => {
       case 'help':
         batch.push(
           { text: 'AVAILABLE COMMANDS', type: 'output' },
-          { text: '  whoami       - about me', type: 'dim' },
-          { text: '  projects     - github projects & open source', type: 'dim' },
-          { text: '  experience   - work history', type: 'dim' },
-          { text: '  skills       - technical proficiencies', type: 'dim' },
-          { text: '  blog         - latest articles on Hashnode', type: 'dim' },
-          { text: '  resume       - download PDF resume', type: 'dim' },
-          { text: '  contact      - get in touch', type: 'dim' },
-          { text: '  clear        - clear terminal', type: 'dim' }
+          { text: <span>&nbsp;&nbsp;<span onClick={() => handleCommand('whoami')} style={{ cursor: 'pointer', textDecoration: 'underline' }}>whoami</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- about me</span>, type: 'dim' },
+          { text: <span>&nbsp;&nbsp;<span onClick={() => handleCommand('projects')} style={{ cursor: 'pointer', textDecoration: 'underline' }}>projects</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- github projects & open source</span>, type: 'dim' },
+          { text: <span>&nbsp;&nbsp;<span onClick={() => handleCommand('experience')} style={{ cursor: 'pointer', textDecoration: 'underline' }}>experience</span>&nbsp;&nbsp;&nbsp;- work history</span>, type: 'dim' },
+          { text: <span>&nbsp;&nbsp;<span onClick={() => handleCommand('skills')} style={{ cursor: 'pointer', textDecoration: 'underline' }}>skills</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- technical proficiencies</span>, type: 'dim' },
+          { text: <span>&nbsp;&nbsp;<span onClick={() => handleCommand('blog')} style={{ cursor: 'pointer', textDecoration: 'underline' }}>blog</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- latest articles on Hashnode</span>, type: 'dim' },
+          { text: <span>&nbsp;&nbsp;<span onClick={() => handleCommand('resume')} style={{ cursor: 'pointer', textDecoration: 'underline' }}>resume</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- download PDF resume</span>, type: 'dim' },
+          { text: <span>&nbsp;&nbsp;<span onClick={() => handleCommand('contact')} style={{ cursor: 'pointer', textDecoration: 'underline' }}>contact</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- get in touch</span>, type: 'dim' },
+          { text: <span>&nbsp;&nbsp;<span onClick={() => handleCommand('clear')} style={{ cursor: 'pointer', textDecoration: 'underline' }}>clear</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- clear terminal</span>, type: 'dim' }
         );
         break;
       case 'whoami':
@@ -83,7 +73,18 @@ export const Terminal: React.FC<TerminalProps> = ({ forceCommand }) => {
           { text: '  Cloud Developer @ Hewlett Packard Enterprise, Bengaluru', type: 'output' },
           { text: '  Backend & Applied AI Engineer', type: 'output' },
           { text: '', type: 'output' },
-          { text: '  Quick links: GitHub | LinkedIn | Resume | Contact', type: 'cyan' },
+          { 
+            text: (
+              <span>
+                &nbsp;&nbsp;Quick links: {' '}
+                <a href="https://github.com/abhishek09827" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>GitHub</a> | {' '}
+                <a href="https://www.linkedin.com/in/abhishek-kaushik-0a6a16243/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>LinkedIn</a> | {' '}
+                <span onClick={() => handleCommand('resume')} style={{ cursor: 'pointer', textDecoration: 'underline' }}>Resume</span> | {' '}
+                <span onClick={() => handleCommand('contact')} style={{ cursor: 'pointer', textDecoration: 'underline' }}>Contact</span>
+              </span>
+            ), 
+            type: 'cyan' 
+          },
           { text: '', type: 'output' },
           { text: '  [ ENGINEERING PHILOSOPHY ]', type: 'cyan' },
           { text: '  - Build systems, not scripts', type: 'dim' },
@@ -142,6 +143,38 @@ export const Terminal: React.FC<TerminalProps> = ({ forceCommand }) => {
       appendLogs(batch);
     }
   }, [appendLogs]);
+
+  const BOOT_SEQUENCE: BootLine[] = React.useMemo(() => [
+    { text: 'abhishek@ai-engineer:~', type: 'prompt' },
+    { text: '', type: 'output' },
+    { text: '  Cloud Developer @ Hewlett Packard Enterprise (HPE)', type: 'output' },
+    { text: '  Kafka · dbt · RAG · CrewAI · Go · PyPI author · OSS contributor', type: 'output' },
+    { text: '  v3.0.0 | zsh 5.9 | node 20 | python 3.11', type: 'dim' },
+    { text: '', type: 'output' },
+    { 
+      text: (
+        <span>
+          &nbsp;&nbsp;Press `/` for Command Palette, or type <span onClick={() => handleCommand('help')} style={{ cursor: 'pointer', textDecoration: 'underline' }}>help</span>.
+        </span>
+      ), 
+      type: 'dim' 
+    },
+    { 
+      text: (
+        <span>
+          &nbsp;&nbsp;Try: {' '}
+          {['whoami', 'projects', 'experience', 'skills', 'blog', 'resume', 'contact'].map((c, i, arr) => (
+            <React.Fragment key={c}>
+              <span onClick={() => handleCommand(c)} style={{ cursor: 'pointer', textDecoration: 'underline' }}>{c}</span>
+              {i < arr.length - 1 ? ' | ' : ''}
+            </React.Fragment>
+          ))}
+        </span>
+      ), 
+      type: 'dim' 
+    },
+    { text: '', type: 'output' }
+  ], [handleCommand]);
 
   useEffect(() => {
     // Initial Boot
