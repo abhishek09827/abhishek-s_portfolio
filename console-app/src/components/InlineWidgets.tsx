@@ -103,7 +103,7 @@ const ProjectsWidget = () => {
       <div style={{ color: 'var(--cyan)', fontWeight: 'bold', fontSize: '14px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
         <Code size={16} /> FLAGSHIP_PROJECTS
       </div>
-      
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {projects.map(p => <ProjectCard key={p.id} project={p} />)}
       </div>
@@ -112,7 +112,7 @@ const ProjectsWidget = () => {
         <span>OTHER REPOSITORIES</span>
         <span>OPEN SOURCE CONTRIBUTIONS</span>
       </div>
-      
+
       <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           <CompactTile title="sura-revamped" tag="TypeScript" color="var(--amber)" />
@@ -162,7 +162,7 @@ const ProjectCard = ({ project }: { project: ProjectCardModel }) => {
             style={{ overflow: 'hidden', borderTop: `1px solid ${color}20` }}
           >
             <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '20px', background: 'var(--terminal-bg)' }}>
-              
+
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                 <a href={project.github} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text)', background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '4px', textDecoration: 'none', border: '1px solid var(--border)' }} onClick={(e) => e.stopPropagation()}>
                   <Code size={12} /> View on GitHub
@@ -210,25 +210,15 @@ const CompactTile = ({ title, tag, color }: { title: string, tag: string, color:
 const ExperienceWidget = () => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', position: 'relative', paddingLeft: '8px' }}>
     <div style={{ position: 'absolute', left: '19px', top: '10px', bottom: '10px', width: '2px', background: 'var(--border)' }} />
-    <TimelineItem 
-      year="2025-present" 
-      role="Cloud Developer @ Hewlett Packard Enterprise (HPE)" 
-      desc="Cloud-native distributed backend services, Node.js/Python/AWS, PII masking ingestion pipelines, CI/CD automation, GenAI integration inside enterprise workflows."
+    <TimelineItem
+      year="Aug 2025 – Present"
+      role="Cloud Developer I @ Hewlett Packard Enterprise"
+      desc="Kafka topology optimization, PySpark distributed transforms, PII masking at ingestion boundary, ArgoCD + GitHub Actions CI/CD, GraphQL APIs, Avro/Protobuf schema evolution on Kubernetes."
     />
-    <TimelineItem 
-      year="2024" 
-      role="Built QueryMind-DW prototype independently" 
-      desc="NL-to-SQL with RAG, validation layers, LLM-backed APIs."
-    />
-    <TimelineItem 
-      year="2023" 
-      role="Open Source Contributor" 
-      desc="dbt-core & LlamaIndex — PRs merged, architecture improvements."
-    />
-    <TimelineItem 
-      year="2021-2025" 
-      role="B.E. @ Ramaiah Institute of Technology, Bengaluru" 
-      desc="Computer Science — graduated 2025."
+    <TimelineItem
+      year="Feb 2025 – Aug 2025"
+      role="SDE Intern @ Hewlett Packard Enterprise"
+      desc="AWS Glue + Lambda ETL pipelines, PySpark data quality validation, SageMaker ML telemetry proof-of-concept, structured logging and monitoring enhancements."
     />
   </div>
 );
@@ -264,11 +254,11 @@ const SkillGroup = ({ title, skills, color }: { title: string, skills: { name: s
         <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ width: '100px', fontSize: '12px', color: 'var(--text)' }}>{s.name}</div>
           <div style={{ flex: 1, height: '4px', background: 'var(--border)', borderRadius: '2px', overflow: 'hidden' }}>
-            <motion.div 
-              initial={{ width: 0 }} 
-              animate={{ width: `${s.pct}%` }} 
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${s.pct}%` }}
               transition={{ duration: 1, delay: i * 0.1 }}
-              style={{ height: '100%', background: color, boxShadow: `0 0 8px ${color}` }} 
+              style={{ height: '100%', background: color, boxShadow: `0 0 8px ${color}` }}
             />
           </div>
           <div style={{ width: '30px', fontSize: '10px', color: 'var(--muted)', textAlign: 'right' }}>{s.pct}%</div>
@@ -279,22 +269,74 @@ const SkillGroup = ({ title, skills, color }: { title: string, skills: { name: s
 );
 
 const BlogWidget = () => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-    <div style={{ color: 'var(--cyan)', fontWeight: 'bold', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-      <FileText size={16} /> RECENT_ARTICLES @ Hashnode
-    </div>
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      <div style={{ padding: '12px', background: 'rgba(0,212,255,0.05)', borderRadius: '8px', borderLeft: '3px solid var(--cyan)', cursor: 'pointer' }}>
-        <div style={{ color: 'var(--text)', fontSize: '14px', fontWeight: 'bold' }}>Architecting Production RAG Pipelines</div>
-        <div style={{ color: 'var(--dim)', fontSize: '12px', marginTop: '4px' }}>Exploring chunking strategies, vector DB scaling, and latency optimization.</div>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div>
+      <div style={{ color: 'var(--cyan)', fontWeight: 'bold', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+        <FileText size={16} /> RECENT_ARTICLES @ Hashnode
       </div>
-      <div style={{ padding: '12px', background: 'rgba(176,106,255,0.05)', borderRadius: '8px', borderLeft: '3px solid var(--purple)', cursor: 'pointer' }}>
-        <div style={{ color: 'var(--text)', fontSize: '14px', fontWeight: 'bold' }}>Real-time streaming with Kafka and Airflow</div>
-        <div style={{ color: 'var(--dim)', fontSize: '12px', marginTop: '4px' }}>How to bridge the gap between streaming and batch processing reliably.</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <a 
+          href="https://ab-blog.hashnode.dev/i-built-a-cli-data-quality-tool-that-goes-beyond-schema-checks-here-s-what-i-learned" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          style={{ textDecoration: 'none', display: 'block', padding: '12px', background: 'rgba(0,212,255,0.05)', borderRadius: '8px', borderLeft: '3px solid var(--cyan)' }}
+        >
+          <div style={{ color: 'var(--text)', fontSize: '14px', fontWeight: 'bold' }}>I built a CLI data quality tool that goes beyond schema checks</div>
+          <div style={{ color: 'var(--dim)', fontSize: '12px', marginTop: '4px' }}>Deep dive into SageScan: statistical validation, drift detection, and AI-powered failure analysis.</div>
+        </a>
+        <a 
+          href="https://ab-blog.hashnode.dev/architecting-production-rag-pipelines" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          style={{ textDecoration: 'none', display: 'block', padding: '12px', background: 'rgba(176,106,255,0.05)', borderRadius: '8px', borderLeft: '3px solid var(--purple)' }}
+        >
+          <div style={{ color: 'var(--text)', fontSize: '14px', fontWeight: 'bold' }}>Architecting Production RAG Pipelines</div>
+          <div style={{ color: 'var(--dim)', fontSize: '12px', marginTop: '4px' }}>Exploring chunking strategies, vector DB scaling, and latency optimization.</div>
+        </a>
       </div>
+      <a 
+        href="https://ab-blog.hashnode.dev/" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        style={{ color: 'var(--cyan)', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', marginTop: '12px' }}
+      >
+        View all on Hashnode <ArrowRight size={12} />
+      </a>
     </div>
-    <div style={{ color: 'var(--cyan)', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', marginTop: '8px' }}>
-      View all on Hashnode <ArrowRight size={12} />
+
+    <div>
+      <div style={{ color: 'var(--magenta)', fontWeight: 'bold', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+        <ArrowRight size={16} /> X_THREADS
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <a 
+          href="https://x.com/Abhishe17129030/status/2037570059183513608?s=20" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          style={{ textDecoration: 'none', color: 'var(--text)', background: 'rgba(255,42,133,0.05)', border: '1px solid rgba(255,42,133,0.2)', padding: '10px 14px', borderRadius: '6px', fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        >
+          <span>Engineering Deep Dive: SageScan Design</span>
+          <ArrowRight size={12} style={{ opacity: 0.5 }} />
+        </a>
+        <a 
+          href="https://x.com/Abhishe17129030/status/2036149585459159065?s=20" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          style={{ textDecoration: 'none', color: 'var(--text)', background: 'rgba(255,42,133,0.05)', border: '1px solid rgba(255,42,133,0.2)', padding: '10px 14px', borderRadius: '6px', fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        >
+          <span>Data Quality in Modern Pipelines</span>
+          <ArrowRight size={12} style={{ opacity: 0.5 }} />
+        </a>
+        <a 
+          href="https://x.com/Abhishe17129030/status/2036144754535309421?s=20" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          style={{ textDecoration: 'none', color: 'var(--text)', background: 'rgba(255,42,133,0.05)', border: '1px solid rgba(255,42,133,0.2)', padding: '10px 14px', borderRadius: '6px', fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        >
+          <span>AIOps & Log Intelligence Threads</span>
+          <ArrowRight size={12} style={{ opacity: 0.5 }} />
+        </a>
+      </div>
     </div>
   </div>
 );
