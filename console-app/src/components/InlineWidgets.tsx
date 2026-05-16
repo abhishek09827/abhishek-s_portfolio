@@ -62,21 +62,21 @@ const ProjectsWidget = () => {
     },
     {
       id: 'oi',
-      title: 'Operational-Intelligence-Engine',
-      oneliner: 'LLM-powered AIOps platform — detects anomalies in infra logs, auto-creates JIRA tickets with root cause + suggested fix.',
+      title: 'Operational-Intelligence-Engine 🚀',
+      oneliner: 'Agentic AI assistant for Incident Response & SRE workflows. Uses CrewAI, RAG (pgvector), and Google Gemini to automate log analysis and RCA.',
       github: 'https://github.com/abhishek09827/Operational-Intelligence-Engine',
       color: 'var(--purple)',
-      tags: ['Python', 'Kafka', 'PySpark', 'Mistral 7B', 'LangChain', 'JIRA API', 'Redis'],
-      metrics: ['<5s latency', '~60% noise reduction', '100% data residency'],
+      tags: ['Python', 'CrewAI', 'FastAPI', 'Google Gemini', 'pgvector', 'PostgreSQL', 'Redis', 'Prometheus', 'Docker'],
+      metrics: ['Kafka throughput', 'Z-score rate', '60% noise reduction', '<5s e2e latency'],
       facts: [
-        'Two-stage detection: statistical fast path + LLM deep analysis',
-        'Filters ~90% of noise cheaply before calling LLM',
-        'Confidence threshold reduces false positive pages by ~60%',
-        'Mistral 7B: self-hostable, 100% data residency maintained',
-        'Mean time from anomaly to JIRA ticket: under 5 seconds',
-        'Feedback loop: resolved incidents become future few-shot examples'
+        'Automated Incident Analysis: Intelligently parses messy, unstructured logs for anomaly detection.',
+        'Agentic RCA: Multi-agent collaboration via CrewAI to pinpoint exact source of failures.',
+        'RAG-Powered: Semantic search across historical incidents using pgvector embeddings.',
+        'Smart Remediation: Suggests actionable fixes based on historical data and SRE best practices.',
+        'Observability: Built-in Prometheus instrumentation for real-time API monitoring.',
+        'Architecture: Microservices-based Dockerized environment separating API, AI, and storage.'
       ],
-      flow: 'Kafka Logs → Z-score baseline filter → Mistral 7B RCA → Confidence evaluation → JIRA API'
+      flow: 'Unstructured Logs → Kafka → Z-score Filter → CrewAI Multi-Agent RCA → pgvector RAG Lookup → Remediation Plan'
     },
     {
       id: 'querymind',
@@ -353,9 +353,14 @@ const ResumeWidget = () => (
           <div style={{ color: 'var(--dim)', fontSize: '12px' }}>Use this as the quick one-page summary for recruiters.</div>
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--purple)', color: '#000', padding: '8px 16px', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
+      <a 
+        href="https://drive.google.com/file/d/1A--YWfsRC12TjlKe8NgsdBcTukiEdUhN/view?usp=sharing" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--purple)', color: '#000', padding: '8px 16px', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer', textDecoration: 'none' }}
+      >
         <Download size={14} /> DOWNLOAD
-      </div>
+      </a>
     </div>
 
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
