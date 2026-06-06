@@ -188,7 +188,7 @@ export const Terminal: React.FC<TerminalProps> = ({ forceCommand }) => {
       inputRef.current?.focus();
     }, 800);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [BOOT_SEQUENCE]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });

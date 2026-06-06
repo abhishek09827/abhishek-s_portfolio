@@ -1248,12 +1248,26 @@ export const ActivityView: React.FC = () => {
   const [githubStats, setGithubStats] = useState({ repos: 0, followers: 0, stars: 0, following: 0 });
   const [languages, setLanguages] = useState<Record<string, number>>({});
 
+  interface ContributionDay {
+    contributionCount: number;
+    date?: string;
+  }
+
+  interface ContributionWeek {
+    contributionDays: ContributionDay[];
+  }
+
+  interface GitHubRepo {
+    stargazers_count: number;
+    language?: string | null;
+  }
+
   useEffect(() => {
     // Fetch heatmap (GraphQL via secure backend proxy)
     fetch('/api/github?type=heatmap')
       .then(res => res.json())
       .then(data => {
-        const weeksData = data?.data?.user?.contributionsCollection?.contributionCalendar?.weeks;
+        const weeksData = data?.data?.user?.contributionsCollection?.contributionCalendar?.weeks as ContributionWeek[] | undefined;
         if (!weeksData) {
           // Fallback to public API if backend is unreachable or fails
           fetch('https://github-contributions-api.jogruber.de/v4/abhishek09827')
@@ -1282,8 +1296,8 @@ export const ActivityView: React.FC = () => {
         const totals: number[] = [];
         const dates: string[] = [];
         
-        weeksData.forEach((week: any) => {
-          const days = week.contributionDays.map((d: any) => d.contributionCount);
+        weeksData.forEach((week) => {
+          const days = week.contributionDays.map((d) => d.contributionCount);
           weeks.push(days);
           totals.push(days.reduce((a: number, b: number) => a + b, 0));
           dates.push(week.contributionDays[0]?.date || '');
@@ -1312,7 +1326,7 @@ export const ActivityView: React.FC = () => {
     // Fetch repos for stars and languages (via secure backend proxy)
     fetch('/api/github?type=repos')
       .then(res => res.json())
-      .then((repos: any[]) => {
+      .then((repos: GitHubRepo[]) => {
         if (!repos || !Array.isArray(repos)) return;
         let totalStars = 0;
         const langMap: Record<string, number> = {};

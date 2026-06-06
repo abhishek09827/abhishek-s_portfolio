@@ -145,7 +145,7 @@ export const AIAgent: React.FC<{
 
   // Waiting dots animation
   useEffect(() => {
-    if (phase !== 'waiting') { setWaitDots(''); return; }
+    if (phase !== 'waiting') { queueMicrotask(() => setWaitDots('')); return; }
     let i = 0;
     const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
     const t = setInterval(() => { setWaitDots(frames[i++ % frames.length]); }, 80);
